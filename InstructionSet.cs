@@ -7,8 +7,8 @@ namespace sass
 {
     public class InstructionSet
     {
-        public Dictionary<string, OperandGroup> OperandGroups { get; set; }
-        public List<Instruction> Instructions { get; set; }
+        private Dictionary<string, OperandGroup> OperandGroups { get; set; }
+        private List<Instruction> Instructions { get; set; }
 
         private InstructionSet()
         {
@@ -20,7 +20,7 @@ namespace sass
         {
             string[] lines = definition.Replace("\r", "").Split('\n');
             var table = new InstructionSet();
-            for (int i = 0; i < lines.Length; i++ )
+            for (int i = 0; i < lines.Length; i++)
             {
                 string line = lines[i].Trim();
                 if (line.StartsWith("#") || string.IsNullOrEmpty(line))
@@ -37,14 +37,86 @@ namespace sass
                 else if (line.StartsWith("INS "))
                 {
                     string[] parts = line.Split(' ');
-                    string match, value;
-                    match = parts[1];
-                    value = line.Substring(line.IndexOf(' ') + 1);
+                    string match = parts[1];
+                    string value = line.Substring(line.IndexOf(' ') + 1);
                     value = value.Substring(value.IndexOf(' ') + 1);
-                    table.Instructions.Add(new Instruction(match, value.Replace(" ", "")));
+                    table.Instructions.Add(new Instruction(match.ToLower(), value.Replace(" ", "")));
                 }
             }
             return table;
+        }
+
+        public Instruction Match(string code)
+        {
+            code = code.ToLower();
+            var result = new Instruction();
+            foreach (var instruction in Instructions)
+            {
+                int j = 0;
+                bool requiredWhitespaceMet = false;
+                bool match = true;
+                // Create new result
+                result.Match = instruction.Match;
+                result.Value = instruction.Value;
+                result.Operands = new Dictionary<char, Operand>();
+                result.ImmediateValues = new Dictionary<char, ImmediateValue>();
+                for (int i = 0; i < instruction.Match.Length; i++, j++)
+                {
+                    if (instruction.Match[i] == '_') // Required whitespace
+                    {
+                        if (requiredWhitespaceMet && char.IsWhiteSpace(code[j]))
+                            i--;
+                        else if (requiredWhitespaceMet && !char.IsWhiteSpace(code[j]))
+                        {
+                            requiredWhitespaceMet = false;
+                            j--;
+                        }
+                        else
+                        {
+                            if (char.IsWhiteSpace(code[j]))
+                            {
+                                requiredWhitespaceMet = true;
+                                i--;
+                            }
+                            else
+                            {
+                                match = false;
+                                break;
+                            }
+                        }
+                    }
+                    else if (instruction.Match[i] == '-') // Optional whitespace
+                    {
+                        if (char.IsWhiteSpace(code[j]))
+                            i--;
+                        else
+                            j--;
+                    }
+                    else if (instruction.Match[i] == '%') // Immediate value
+                    {
+                        char key = instruction.Match[++i]; i += 2;
+                        string bitString = "";
+                        while (instruction.Match[i] != '>')
+                            bitString += instruction.Match[i++];
+                        i++; int bits = int.Parse(bitString);
+                        // Get value
+                        // TODO
+                    }
+                    else
+                    {
+                        if (instruction.Match[i] != code[j])
+                        {
+                            match = false;
+                            break;
+                        }
+                    }
+                }
+                if (j != code.Length || !match)
+                    continue;
+                // Match found
+                return instruction;
+            }
+            return null;
         }
     }
 }

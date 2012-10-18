@@ -46,6 +46,7 @@
   <ItemGroup>
     <Compile Include="Assembler.cs" />
     <Compile Include="Extensions.cs" />
+    <Compile Include="ImmediateValue.cs" />
     <Compile Include="Instruction.cs" />
     <Compile Include="InstructionSet.cs" />
     <Compile Include="Operand.cs" />

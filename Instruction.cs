@@ -7,13 +7,23 @@ namespace sass
 {
     public class Instruction
     {
-        public Instruction(string match, string value)
+        internal Instruction()
+        {
+        }
+
+        internal Instruction(string match, string value)
         {
             Match = match;
             Value = value;
+            ImmediateValues = new Dictionary<char, ImmediateValue>();
+            Operands = new Dictionary<char, Operand>();
         }
 
-        public string Match { get; set; }
+        internal string Match { get; set; }
         public string Value { get; set; }
+        // key, bits
+        public Dictionary<char, ImmediateValue> ImmediateValues { get; set; }
+        // key, operand
+        public Dictionary<char, Operand> Operands { get; set; }
     }
 }
