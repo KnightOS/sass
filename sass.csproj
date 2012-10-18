@@ -10,8 +10,9 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>sass</RootNamespace>
     <AssemblyName>sass</AssemblyName>
-    <TargetFrameworkVersion>v4.0.1</TargetFrameworkVersion>
-    <TargetFrameworkProfile>Client</TargetFrameworkProfile>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkProfile>
+    </TargetFrameworkProfile>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
@@ -44,14 +45,22 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assembler.cs" />
-    <Compile Include="Instruciton.cs" />
-    <Compile Include="InstructionTable.cs" />
+    <Compile Include="Extensions.cs" />
+    <Compile Include="Instruction.cs" />
+    <Compile Include="InstructionSet.cs" />
+    <Compile Include="Operand.cs" />
+    <Compile Include="OperandGroup.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
     <EmbeddedResource Include="z80.table" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="test.asm">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

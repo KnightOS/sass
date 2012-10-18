@@ -5,7 +5,7 @@ using System.Text;
 
 namespace sass
 {
-    class Assembler
+    public class Assembler
     {
     }
 }
