@@ -100,7 +100,40 @@ namespace sass
                             bitString += instruction.Match[i++];
                         i++; int bits = int.Parse(bitString);
                         // Get value
-                        // TODO
+                        string value = GetOperandValue(instruction, i, code, j);
+                        if (value == null)
+                        {
+                            match = false;
+                            break;
+                        }
+                        j += value.Length - 1;
+                        instruction.ImmediateValues.Add(key, new ImmediateValue()
+                        {
+                            Bits = bits,
+                            Value = value
+                        });
+                    }
+                    else if (instruction.Match[i] == '@')
+                    {
+                        char key = instruction.Match[++i]; i += 2;
+                        string group = "";
+                        while (instruction.Match[i] != '>')
+                            group += instruction.Match[i++];
+                        i++;
+                        string value = GetOperandValue(instruction, i, code, j);
+                        if (value == null)
+                        {
+                            match = false;
+                            break;
+                        }
+                        j += value.Length - 1;
+                        var operand = GetOperand(OperandGroups[group], value);
+                        if (operand == null)
+                        {
+                            match = false;
+                            break;
+                        }
+                        instruction.Operands.Add(key, operand);
                     }
                     else
                     {
@@ -117,6 +150,39 @@ namespace sass
                 return instruction;
             }
             return null;
+        }
+
+        private Operand GetOperand(OperandGroup operandGroup, string value)
+        {
+            foreach (var op in operandGroup.Operands)
+            {
+                if (op.Name.ToLower() == value)
+                    return op;
+            }
+            return null;
+        }
+
+        private string GetOperandValue(Instruction instruction, int i, string code, int j)
+        {
+            // Get the delimiter
+            char? delimiter = null;
+            while (i < instruction.Match.Length)
+            {
+                if (instruction.Match[i] == '-' || instruction.Match[i] == '_')
+                    i++;
+                else
+                {
+                    delimiter = instruction.Match[i];
+                    break;
+                }
+            }
+            if (delimiter == null)
+                return code.Substring(j);
+            int index = code.IndexOf(delimiter.Value, j);
+            if (index == -1)
+                return null;
+            else
+                return code.Substring(j, index - j);
         }
     }
 }

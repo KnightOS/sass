@@ -45,10 +45,15 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assembler.cs" />
+    <Compile Include="AssemblyError.cs" />
+    <Compile Include="AssemblyOutput.cs" />
+    <Compile Include="AssemblyWarning.cs" />
+    <Compile Include="CodeType.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="ImmediateValue.cs" />
     <Compile Include="Instruction.cs" />
     <Compile Include="InstructionSet.cs" />
+    <Compile Include="Listing.cs" />
     <Compile Include="Operand.cs" />
     <Compile Include="OperandGroup.cs" />
     <Compile Include="Program.cs" />

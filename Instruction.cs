@@ -25,5 +25,18 @@ namespace sass
         public Dictionary<char, ImmediateValue> ImmediateValues { get; set; }
         // key, operand
         public Dictionary<char, Operand> Operands { get; set; }
+
+        public int Length
+        {
+            get
+            {
+                int l = Value.Count(c => c == '0' || c == '1');
+                foreach (var value in ImmediateValues)
+                    l += value.Value.Bits;
+                foreach (var value in Operands)
+                    l += value.Value.Value.Length;
+                return l / 8;
+            }
+        }
     }
 }
