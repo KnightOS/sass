@@ -7,7 +7,13 @@ namespace sass
 {
     public class ImmediateValue
     {
+        public ImmediateValue()
+        {
+            RelativeToPC = false;
+        }
+
         public int Bits { get; set; }
         public string Value { get; set; }
+        public bool RelativeToPC { get; set; }
     }
 }

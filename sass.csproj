@@ -49,6 +49,7 @@
     <Compile Include="AssemblyOutput.cs" />
     <Compile Include="AssemblyWarning.cs" />
     <Compile Include="CodeType.cs" />
+    <Compile Include="ExpressionEngine.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="ImmediateValue.cs" />
     <Compile Include="Instruction.cs" />

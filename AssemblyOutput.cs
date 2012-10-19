@@ -7,6 +7,11 @@ namespace sass
 {
     public class AssemblyOutput
     {
+        public AssemblyOutput()
+        {
+            Listing = new List<Listing>();
+        }
+
         public byte[] Data { get; set; }
         public List<Listing> Listing { get; set; }
     }

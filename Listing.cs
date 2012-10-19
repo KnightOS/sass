@@ -12,5 +12,7 @@ namespace sass
         public Instruction Instruction { get; set; }
         public AssemblyError Error { get; set; }
         public AssemblyWarning Warning { get; set; }
+        public uint Address { get; set; }
+        public byte[] Output { get; set; }
     }
 }

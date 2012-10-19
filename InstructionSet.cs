@@ -107,10 +107,32 @@ namespace sass
                             break;
                         }
                         j += value.Length - 1;
-                        instruction.ImmediateValues.Add(key, new ImmediateValue()
+                        instruction.ImmediateValues.Add(key, new ImmediateValue
                         {
                             Bits = bits,
                             Value = value
+                        });
+                    }
+                    else if (instruction.Match[i] == '^') // Relative immediate value
+                    {
+                        char key = instruction.Match[++i]; i += 2;
+                        string bitString = "";
+                        while (instruction.Match[i] != '>')
+                            bitString += instruction.Match[i++];
+                        i++; int bits = int.Parse(bitString);
+                        // Get value
+                        string value = GetOperandValue(instruction, i, code, j);
+                        if (value == null)
+                        {
+                            match = false;
+                            break;
+                        }
+                        j += value.Length - 1;
+                        instruction.ImmediateValues.Add(key, new ImmediateValue
+                        {
+                            Bits = bits,
+                            Value = value,
+                            RelativeToPC = true
                         });
                     }
                     else if (instruction.Match[i] == '@')

@@ -26,7 +26,7 @@ namespace sass
         // key, operand
         public Dictionary<char, Operand> Operands { get; set; }
 
-        public int Length
+        public uint Length
         {
             get
             {
@@ -35,7 +35,7 @@ namespace sass
                     l += value.Value.Bits;
                 foreach (var value in Operands)
                     l += value.Value.Value.Length;
-                return l / 8;
+                return (uint)(l / 8);
             }
         }
     }
