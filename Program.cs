@@ -14,7 +14,10 @@ namespace sass
             InstructionSet z80;
             using (var stream = new StreamReader(LoadResource("sass.z80.table")))
                 z80 = InstructionSet.Load(stream.ReadToEnd());
-            var match = z80.Match("LD A, B");
+            Assembler assembler = new Assembler(z80);
+            // TODO: Command line arguments
+            string file = File.ReadAllText(args[0]);
+            var output = assembler.Assemble(file);
         }
 
         public static Stream LoadResource(string name)

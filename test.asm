@@ -1,1 +1,3 @@
-﻿EX DE, HL
+﻿    EX DE, HL
+    LD A, 20
+    PUSH AF

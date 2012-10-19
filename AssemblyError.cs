@@ -7,6 +7,7 @@ namespace sass
 {
     public enum AssemblyError
     {
-        None
+        None = 0,
+        InvalidInstruction = 1,
     }
 }
