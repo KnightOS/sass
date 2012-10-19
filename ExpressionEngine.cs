@@ -32,6 +32,7 @@ namespace sass
         public ulong Evaluate(string expression, uint PC)
         {
             expression = expression.Trim();
+            // Check for parenthesis
             if (HasOperators(expression))
             {
                 // Recurse

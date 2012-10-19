@@ -141,13 +141,13 @@ namespace sass
                         string group = "";
                         while (instruction.Match[i] != '>')
                             group += instruction.Match[i++];
-                        i++;
-                        string value = GetOperandValue(instruction, i, code, j);
+                        i++; string value = GetOperandValue(instruction, i, code, j);
                         if (value == null)
                         {
                             match = false;
                             break;
                         }
+                        value = value.Trim().ToLower();
                         j += value.Length - 1;
                         var operand = GetOperand(OperandGroups[group], value);
                         if (operand == null)
@@ -156,6 +156,7 @@ namespace sass
                             break;
                         }
                         result.Operands.Add(key, operand);
+                        i--;
                     }
                     else
                     {

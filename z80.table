@@ -42,14 +42,14 @@ OPERAND g2 P  110
 OPERAND g2 M  111
 
 # GROUP 3
-OPERAND g3 B  000
-OPERAND g3 C  001
-OPERAND g3 D  010
-OPERAND g3 E  011
-OPERAND g3 H  100
-OPERAND g3 L  101
+OPERAND g3 A    111
+OPERAND g3 B    000
+OPERAND g3 C    001
+OPERAND g3 D    010
+OPERAND g3 E    011
+OPERAND g3 H    100
+OPERAND g3 L    101
 OPERAND g3 (HL) 110
-OPERAND g3 A 111
 
 # GROUP 4
 OPERAND g4 BC 0
@@ -75,59 +75,73 @@ OPERAND g7 AF 11
 OPERAND g8 IX 11011101
 OPERAND g8 IY 11111101
 
+# GROUP 9
+OPERAND g9 BC 00
+OPERAND g9 DE 01
+OPERAND g9 IX 10
+OPERAND g9 SP 11
+
+# GROUP 10
+OPERAND g10 BC 00
+OPERAND g10 DE 01
+OPERAND g10 IY 10
+OPERAND g10 SP 11
+
 # Most instructions were just lifted from Learn TI-83+ Assembly in 28 Days, they've got
 # pretty nice instruction set documentation.
 #### INSTRUCTIONS
 
 #### DATA MOVEMENT
 
-INS EX_DE-,-HL 11101011
-INS EX_AF-,-AF' 00001000
-INS EX_(-SP-)-,-HL 11100011
-INS EX_(-SP-)-,-@A<g8> @A 11100011
+INS EX_DE-,-HL                          11101011
+    INS EX_HL-,-DE                      11101011
+INS EX_AF-,-AF'                         00001000
+    INS EX_AF'-,-AF                     00001000
+INS EX_(-SP-)-,-HL                      11100011
+    INS EX_HL-,-(-SP-)                  11100011
+INS EX_(-SP-)-,-@A<g8>                  @A 11100011
+    INS EX_@A<g8>-,-(-SP-)              @A 11100011
 
-INS EXX 11011001
+INS EXX                                 11011001
 
-INS LD_SP-,-HL 11111001
-INS LD_SP-,-@A<g8> @A 11111001
-INS LD_A-,-@A<g4> 000@A1010
-INS LD_A-,-@A<g5> 11101101 0101@A111
-INS LD_@A<g5>-,-A 11101101 0100@A111
-INS LD_@A<g3>-,-@B<g3> 01@A@B
+INS LD_@A<g3>-,-@B<g3>                  01@A@B
+INS LD_@A<g3>-,-%B<8>                   00@A110 %B
+INS LD_@A<g3>-,-(-@B<g8>-+-%C<8>-)      @B 01@A110 %C
+    INS LD_@A<g3>-,-(-%C<8>-+-@B<g8>-)  @B 01@A110 %C
+    INS LD_@A<g3>-,-(-@B<g8>-)          @B 01@A110 00000000
+INS LD_(-@A<g8>-+-%B<8>-)-,-@C<g3>      @A 01110@C %B
+    INS LD_(-%B<8>-+-@A<g8>-)-,-@C<g3>  @A 01110@C %B
+    INS LD_(-@A<g8>-)-,-@C<g3>          @A 01110@C 00000000
+INS LD_(-@A<g8>-+-%B<8>-)-,-%C<8>       @A 00110110 %B %C
+    INS LD_(-%B<8>-+-@A<g8>-)-,-%C<8>   @A 00110110 %B %C
+    INS LD_(-@A<g8>-)-,-%C<8>           @A 00110110 %B 00000000
+INS LD_A-,-(-@A<g4>-)                   000@A1010
+INS LD_A-,-(-%A<16>-)                   00111010 %A
+INS LD_(-@A<g4>-)-,-A                   000@A0010
+INS LD_(-%A<16>-)-,-A                   00110010 %A
+INS LD_A-,-@A<g5>                       11101101 0101@A111
+INS LD_@A<g5>-,-A                       11101101 0100@A111
+INS LD_@A<g6>-,-%B<16>                  00@A0001 %B
+INS LD_@A<g8>-,-%B<16>                  @A 00100001 %B
+INS LD_HL-,-(-%A<16>-)                  00101010 %A
+INS LD_@A<g6>-,-(-%B<16>-)              11101101 01@A1011 %B
+INS LD_@A<g8>-,-(-%B<16>-)              @A 00101010 %B
+INS LD_(-%A<16>-)-,-HL                  00100010 %A
+INS LD_(-%A<16>-)-,-@B<g6>              11101101 : 01@B0011 %A
+INS LD_(-%A<16>-)-,-@B<g8>              @B 00100010 %A
+INS LD_SP-,-HL                          11111001
+INS LD_SP-,-@A<g8>                      @A 11111001
 
-INS LD_(-@A<g4>-)-,-A 000@A0010
-INS LD_@A<g3>-,-(-@B<g8>-+-%C<8>-) @B 01@A110 %C
-# Alternate
-INS LD_@A<g3>-,-(-%C<8>-+-@B<g8>-) @B 01@A110 %C
-INS LD_(-@A<g8>-+-%B<8>-)-,-@C<g3> @B 01110@C %B
-# Alternate
-INS LD_(-%B<8>-+-@A<g8>-)-,-@C<g3> @B 01110@C %B
-INS LD_(-@A<g8>-+-%B<8>-)-,-%C<8> @A 00110110 %B %C
-# Alternate
-INS LD_(-%B<8>-+-@A<g8>-)-,-%C<8> @A 00110110 %B %C
-INS LD_@A<g6>-,-(-%B<16>-) 11101101 01@A1011 %B
-INS LD_@A<g8>-,-(-%B<16>-) @A 00101010 %B
-INS LD_(-%A<16>-)-,-HL 00100010 %A
-INS LD_(-%A<16>-)-,-@B<g6> 11101101 01@B0011 %A
-INS LD_(-%A<16>-)-,-@B<g8> @B 00100010 %A
+INS LDD                                 11101101 10101000
 
-INS LD_A-,-%A<8> 00111010 %A
-INS LD_(-%A<16>-)-,-A 00110010 %A
-INS LD_@A<g6>-,-%B<16> 00@A0001 %B
-INS LD_@A<g8>-,-%B<16> @A 00100001 %B
-INS LD_@A<g3>-,-%B<8> 00@A110 %B
-INS LD_HL-,-%A<16> 00101010 %A
+INS LDDR                                11101101 10111000
 
-INS LDD 11101101 10101000
+INS LDI                                 11101101 10100000
 
-INS LDDR 11101101 10111000
+INS LDIR                                11101101 10110000
 
-INS LDI 11101101 10100000
+POP_@A<g7>                              11@A0001
+POP_@A<g8>                              @A 11100001
 
-INS LDIR 11101101 10110000
-
-INS POP_@A<g7> 11@A0001
-INS POP_@A<g8> @A 11100001
-
-INS PUSH_@A<g7> 11@A0101
-INS PUSH_@A<g8> @A 11100101
+PUSH_@A<g7>                             11@A0101
+PUSH_@A<g8>                             @A 11100101
