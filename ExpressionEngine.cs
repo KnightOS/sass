@@ -31,96 +31,93 @@ namespace sass
 
         public ulong Evaluate(string expression, uint PC)
         {
-            return Evaluate(expression, 0, false);
-        }
-
-        public ulong Evaluate(string expression, uint PC, bool relativeToPC)
-        {
             expression = expression.Trim();
             if (HasOperators(expression))
             {
                 // Recurse
                 var parts = SplitExpression(expression);
                 if (parts[0] == "" && parts[1] == "-") // Negate
-                    return (ulong)-(long)Evaluate(parts[2], PC, relativeToPC);
+                    return (ulong)-(long)Evaluate(parts[2], PC);
                 if (parts[0] == "" && parts[1] == "~") // NOT
-                    return ~Evaluate(parts[2], PC, relativeToPC);
+                    return ~Evaluate(parts[2], PC);
                 switch (parts[1]) // Evaluate
                 {
                     case "*":
-                        return Evaluate(parts[0], PC, relativeToPC)
+                        return Evaluate(parts[0], PC)
                                *
-                               Evaluate(parts[2], PC, relativeToPC);
+                               Evaluate(parts[2], PC);
                     case "/":
-                        return Evaluate(parts[0], PC, relativeToPC)
+                        return Evaluate(parts[0], PC)
                                /
-                               Evaluate(parts[2], PC, relativeToPC);
+                               Evaluate(parts[2], PC);
                     case "%":
-                        return Evaluate(parts[0], PC, relativeToPC)
+                        return Evaluate(parts[0], PC)
                                %
-                               Evaluate(parts[2], PC, relativeToPC);
+                               Evaluate(parts[2], PC);
                     case "+":
-                        return Evaluate(parts[0], PC, relativeToPC)
+                        return Evaluate(parts[0], PC)
                                +
-                               Evaluate(parts[2], PC, relativeToPC);
+                               Evaluate(parts[2], PC);
                     case "<<":
-                        return Evaluate(parts[0], PC, relativeToPC)
+                        return Evaluate(parts[0], PC)
                                <<
-                               (int)Evaluate(parts[2], PC, relativeToPC);
+                               (int)Evaluate(parts[2], PC);
                     case ">>":
-                        return Evaluate(parts[0], PC, relativeToPC)
+                        return Evaluate(parts[0], PC)
                                >>
-                               (int)Evaluate(parts[2], PC, relativeToPC);
+                               (int)Evaluate(parts[2], PC);
                     case "<":
-                        return Evaluate(parts[0], PC, relativeToPC)
+                        return Evaluate(parts[0], PC)
                                <
-                               Evaluate(parts[2], PC, relativeToPC) ? 1UL : 0UL;
+                               Evaluate(parts[2], PC) ? 1UL : 0UL;
                     case "<=":
-                        return Evaluate(parts[0], PC, relativeToPC)
+                        return Evaluate(parts[0], PC)
                                <=
-                               Evaluate(parts[2], PC, relativeToPC) ? 1UL : 0UL;
+                               Evaluate(parts[2], PC) ? 1UL : 0UL;
                     case ">":
-                        return Evaluate(parts[0], PC, relativeToPC)
+                        return Evaluate(parts[0], PC)
                                >
-                               Evaluate(parts[2], PC, relativeToPC) ? 1UL : 0UL;
+                               Evaluate(parts[2], PC) ? 1UL : 0UL;
                     case ">=":
-                        return Evaluate(parts[0], PC, relativeToPC)
+                        return Evaluate(parts[0], PC)
                                >=
-                               Evaluate(parts[2], PC, relativeToPC) ? 1UL : 0UL;
+                               Evaluate(parts[2], PC) ? 1UL : 0UL;
                     case "==":
-                        return Evaluate(parts[0], PC, relativeToPC)
+                        return Evaluate(parts[0], PC)
                                ==
-                               Evaluate(parts[2], PC, relativeToPC) ? 1UL : 0UL;
+                               Evaluate(parts[2], PC) ? 1UL : 0UL;
                     case "!=":
-                        return Evaluate(parts[0], PC, relativeToPC)
+                        return Evaluate(parts[0], PC)
                                !=
-                               Evaluate(parts[2], PC, relativeToPC) ? 1UL : 0UL;
+                               Evaluate(parts[2], PC) ? 1UL : 0UL;
                     case "&":
-                        return Evaluate(parts[0], PC, relativeToPC)
+                        return Evaluate(parts[0], PC)
                                &
-                               Evaluate(parts[2], PC, relativeToPC);
+                               Evaluate(parts[2], PC);
                     case "^":
-                        return Evaluate(parts[0], PC, relativeToPC)
+                        return Evaluate(parts[0], PC)
                                ^
-                               Evaluate(parts[2], PC, relativeToPC);
+                               Evaluate(parts[2], PC);
                     case "|":
-                        return Evaluate(parts[0], PC, relativeToPC)
+                        return Evaluate(parts[0], PC)
                                |
-                               Evaluate(parts[2], PC, relativeToPC);
+                               Evaluate(parts[2], PC);
                     case "&&":
-                        return (Evaluate(parts[0], PC, relativeToPC) == 1
+                        return (Evaluate(parts[0], PC) == 1
                                &&
-                               Evaluate(parts[2], PC, relativeToPC) == 1) ? 1UL : 0UL;
+                               Evaluate(parts[2], PC) == 1) ? 1UL : 0UL;
                     case "||":
-                        return (Evaluate(parts[0], PC, relativeToPC) == 1
+                        return (Evaluate(parts[0], PC) == 1
                                ||
-                               Evaluate(parts[2], PC, relativeToPC) == 1) ? 1UL : 0UL;
+                               Evaluate(parts[2], PC) == 1) ? 1UL : 0UL;
                 }
             }
             else
             {
                 // Interpret value
-                if (expression.StartsWith("0x") || expression.StartsWith("$") || expression.EndsWith("h")) // Hex
+                if (expression == "$")
+                    return PC;
+                else if (expression.StartsWith("0x") || expression.StartsWith("$") || expression.EndsWith("h")) // Hex
                     return Convert.ToUInt64(expression, 16);
                 else if (expression.StartsWith("0b") || expression.StartsWith("%") || expression.EndsWith("b")) // Binary
                     return Convert.ToUInt64(expression, 2);

@@ -86,11 +86,12 @@ namespace sass
                         // TODO: Truncation warning
                         if (value.Value.RelativeToPC)
                             instruction = instruction.Replace("^" + value.Key, ConvertToBinary(
-                                ExpressionEngine.Evaluate(value.Value.Value, entry.Address, true),
+                                entry.Address -
+                                (ExpressionEngine.Evaluate(value.Value.Value, entry.Address) + entry.Instruction.Length),
                                 value.Value.Bits));
                         else
                             instruction = instruction.Replace("%" + value.Key, ConvertToBinary(
-                                ExpressionEngine.Evaluate(value.Value.Value, entry.Address, false),
+                                ExpressionEngine.Evaluate(value.Value.Value, entry.Address),
                                 value.Value.Bits));
                     }
                     entry.Output = ExpressionEngine.ConvertFromBinary(instruction);

@@ -203,8 +203,7 @@ namespace sass
             int index = code.IndexOf(delimiter.Value, j);
             if (index == -1)
                 return null;
-            else
-                return code.Substring(j, index - j);
+            return code.Substring(j, index - j);
         }
     }
 }
