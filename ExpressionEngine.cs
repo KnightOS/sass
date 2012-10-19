@@ -8,7 +8,7 @@ namespace sass
 {
     public class ExpressionEngine
     {
-        public Dictionary<string, string> Equates { get; set; }
+        public Dictionary<string, uint> Equates { get; set; }
         // Grouped by priority, based on C operator precedence
         public static string[][] Operators = new[]
             {
@@ -26,7 +26,7 @@ namespace sass
 
         public ExpressionEngine()
         {
-            Equates = new Dictionary<string, string>();
+            Equates = new Dictionary<string, uint>();
         }
 
         public ulong Evaluate(string expression, uint PC)
@@ -135,7 +135,9 @@ namespace sass
                     else
                     {
                         // Look up reference
-                        return 0;
+                        if (Equates.ContainsKey(expression.ToLower()))
+                            return Equates[expression.ToLower()];
+                        throw new KeyNotFoundException("The given equate was not found.");
                     }
                 }
             }

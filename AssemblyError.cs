@@ -9,5 +9,6 @@ namespace sass
     {
         None = 0,
         InvalidInstruction = 1,
+        InvalidLabel = 2,
     }
 }

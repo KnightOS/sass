@@ -55,7 +55,45 @@ namespace sass
                 }
                 else if (line.StartsWith(":") || line.EndsWith(":")) // Label
                 {
-                    
+                    string label;
+                    if (line.StartsWith(":"))
+                        label = line.Substring(1).Trim();
+                    else
+                        label = line.Remove(line.Length - 1).Trim();
+                    label = label.ToLower();
+                    bool valid = true;
+                    for (int k = 0; k < label.Length; k++) // Validate label
+                    {
+                        if (!char.IsLetterOrDigit(label[k]) && k != '_')
+                        {
+                            valid = false;
+                            break;
+                        }
+                    }
+                    if (!valid)
+                    {
+                        output.Listing.Add(new Listing
+                        {
+                            Code = line,
+                            CodeType = CodeType.Label,
+                            Error = AssemblyError.InvalidLabel,
+                            Warning = AssemblyWarning.None,
+                            Address = PC,
+                            FileName = FileNames.Peek(),
+                            LineNumber = LineNumbers.Peek()
+                        });
+                    }
+                    output.Listing.Add(new Listing
+                    {
+                        Code = line,
+                        CodeType = CodeType.Label,
+                        Error = AssemblyError.None,
+                        Warning = AssemblyWarning.None,
+                        Address = PC,
+                        FileName = FileNames.Peek(),
+                        LineNumber = LineNumbers.Peek()
+                    });
+                    ExpressionEngine.Equates.Add(label, PC);
                 }
                 else
                 {
