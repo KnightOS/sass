@@ -14,5 +14,8 @@ namespace sass
         public AssemblyWarning Warning { get; set; }
         public uint Address { get; set; }
         public byte[] Output { get; set; }
+        public int LineNumber { get; set; }
+        public int RootLineNumber { get; set; }
+        public string FileName { get; set; }
     }
 }

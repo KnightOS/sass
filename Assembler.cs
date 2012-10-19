@@ -10,26 +10,52 @@ namespace sass
         public InstructionSet InstructionSet { get; set; }
         public ExpressionEngine ExpressionEngine { get; set; }
 
+        private Stack<int> LineNumbers { get; set; }
+        private Stack<string> FileNames { get; set; } 
+        private int SuspendedLines { get; set; }
+
         public Assembler(InstructionSet instructionSet)
         {
             InstructionSet = instructionSet;
             ExpressionEngine = new ExpressionEngine();
+            SuspendedLines = 0;
+            LineNumbers = new Stack<int>();
+            FileNames = new Stack<string>();
         }
 
-        public AssemblyOutput Assemble(string assembly)
+        public AssemblyOutput Assemble(string assembly, string fileName = null)
         {
             var output = new AssemblyOutput();
             assembly = assembly.Replace("\r", "");
             uint PC = 0;
             string[] lines = assembly.Split('\n');
+            FileNames.Push(fileName);
+            LineNumbers.Push(0);
             for (int i = 0; i < lines.Length; i++)
             {
                 string line = lines[i].Trim().TrimComments();
+                if (SuspendedLines == 0)
+                    LineNumbers.Push(LineNumbers.Pop() + 1);
+                else
+                    SuspendedLines--;
+
+                if (line.SafeContains('\\'))
+                {
+                    // Split lines up
+                    var split = line.SafeSplit('\\');
+                    lines = lines.Take(i).Concat(split).
+                        Concat(lines.Skip(i + 1)).ToArray();
+                    SuspendedLines = split.Length;
+                    i--;
+                    continue;
+                }
+
                 if (line.StartsWith(".") || line.StartsWith("#")) // Directive
                 {
                 }
                 else if (line.StartsWith(":") || line.EndsWith(":")) // Label
                 {
+                    
                 }
                 else
                 {
@@ -47,7 +73,9 @@ namespace sass
                             Error = AssemblyError.InvalidInstruction,
                             Warning = AssemblyWarning.None,
                             Instruction = match,
-                            Address = PC
+                            Address = PC,
+                            FileName = FileNames.Peek(),
+                            LineNumber = LineNumbers.Peek()
                         });
                     }
                     else
@@ -60,7 +88,9 @@ namespace sass
                             Error = AssemblyError.None,
                             Warning = AssemblyWarning.None,
                             Instruction = match,
-                            Address = PC
+                            Address = PC,
+                            FileName = FileNames.Peek(),
+                            LineNumber = LineNumbers.Peek()
                         });
                         PC += match.Length;
                     }

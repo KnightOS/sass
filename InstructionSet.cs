@@ -107,7 +107,7 @@ namespace sass
                             break;
                         }
                         j += value.Length - 1;
-                        instruction.ImmediateValues.Add(key, new ImmediateValue
+                        result.ImmediateValues.Add(key, new ImmediateValue
                         {
                             Bits = bits,
                             Value = value
@@ -128,7 +128,7 @@ namespace sass
                             break;
                         }
                         j += value.Length - 1;
-                        instruction.ImmediateValues.Add(key, new ImmediateValue
+                        result.ImmediateValues.Add(key, new ImmediateValue
                         {
                             Bits = bits,
                             Value = value,
@@ -155,7 +155,7 @@ namespace sass
                             match = false;
                             break;
                         }
-                        instruction.Operands.Add(key, operand);
+                        result.Operands.Add(key, operand);
                     }
                     else
                     {
@@ -169,7 +169,7 @@ namespace sass
                 if (j != code.Length || !match)
                     continue;
                 // Match found
-                return instruction;
+                return result;
             }
             return null;
         }

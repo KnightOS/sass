@@ -50,5 +50,60 @@ namespace sass
             }
             return value.Trim();
         }
+
+        /// <summary>
+        /// Checks for value contained within a string, outside of '' and ""
+        /// </summary>
+        public static bool SafeContains(this string value, char needle)
+        {
+            value = value.Trim();
+            bool inString = false, inChar = false;
+            for (int i = 0; i < value.Length; i++)
+            {
+                if (value[i] == needle && !inString && !inChar)
+                    return true;
+                if (value[i] == '"' && !inChar)
+                    inString = !inString;
+                if (value[i] == '\'' && !inString)
+                    inChar = !inChar;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Works the same as String.Split, but will not split if the requested characters are within
+        /// a character or string literal.
+        /// </summary>
+        public static string[] SafeSplit(this string value, params char[] characters)
+        {
+            string[] result = new string[1];
+            result[0] = "";
+            bool inString = false, inChar = false;
+            foreach (char c in value)
+            {
+                bool foundChar = false;
+                if (!inString && !inChar)
+                {
+                    foreach (char haystack in characters)
+                    {
+                        if (c == haystack)
+                        {
+                            foundChar = true;
+                            result = result.Concat(new string[] { "" }).ToArray();
+                            break;
+                        }
+                    }
+                }
+                if (!foundChar)
+                {
+                    result[result.Length - 1] += c;
+                    if (c == '"' && !inChar)
+                        inString = !inString;
+                    if (c == '\'' && !inString)
+                        inChar = !inChar;
+                }
+            }
+            return result;
+        }
     }
 }
