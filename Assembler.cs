@@ -143,6 +143,8 @@ namespace sass
             for (int i = 0; i < output.Listing.Count; i++)
             {
                 var entry = output.Listing[i];
+                if (entry.Error != AssemblyError.None)
+                    continue;
                 if (entry.CodeType == CodeType.Instruction)
                 {
                     // Assemble output string
