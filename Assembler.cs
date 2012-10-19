@@ -31,11 +31,15 @@ namespace sass
             string[] lines = assembly.Split('\n');
             FileNames.Push(fileName);
             LineNumbers.Push(0);
+            int rootLineNumber = 0;
             for (int i = 0; i < lines.Length; i++)
             {
                 string line = lines[i].Trim().TrimComments();
                 if (SuspendedLines == 0)
+                {
                     LineNumbers.Push(LineNumbers.Pop() + 1);
+                    rootLineNumber++;
+                }
                 else
                     SuspendedLines--;
 
@@ -80,7 +84,8 @@ namespace sass
                             Warning = AssemblyWarning.None,
                             Address = PC,
                             FileName = FileNames.Peek(),
-                            LineNumber = LineNumbers.Peek()
+                            LineNumber = LineNumbers.Peek(),
+                            RootLineNumber = rootLineNumber
                         });
                     }
                     output.Listing.Add(new Listing
@@ -91,7 +96,8 @@ namespace sass
                         Warning = AssemblyWarning.None,
                         Address = PC,
                         FileName = FileNames.Peek(),
-                        LineNumber = LineNumbers.Peek()
+                        LineNumber = LineNumbers.Peek(),
+                        RootLineNumber = rootLineNumber
                     });
                     ExpressionEngine.Equates.Add(label, PC);
                 }
@@ -113,7 +119,8 @@ namespace sass
                             Instruction = match,
                             Address = PC,
                             FileName = FileNames.Peek(),
-                            LineNumber = LineNumbers.Peek()
+                            LineNumber = LineNumbers.Peek(),
+                            RootLineNumber = rootLineNumber
                         });
                     }
                     else
@@ -128,7 +135,8 @@ namespace sass
                             Instruction = match,
                             Address = PC,
                             FileName = FileNames.Peek(),
-                            LineNumber = LineNumbers.Peek()
+                            LineNumber = LineNumbers.Peek(),
+                            RootLineNumber = rootLineNumber
                         });
                         PC += match.Length;
                     }

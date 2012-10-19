@@ -5,3 +5,4 @@ label1:
     LD HL, label1
     LD (label1), A
     LD (IX + 14), A
+    ASDF
