@@ -166,6 +166,7 @@ namespace sass
                     finalBinary.AddRange(entry.Output);
                 }
             }
+            output.Data = finalBinary.ToArray();
             return output;
         }
 

@@ -18,6 +18,7 @@ namespace sass
             // TODO: Command line arguments
             string file = File.ReadAllText(args[0]);
             var output = assembler.Assemble(file);
+            File.WriteAllBytes(args[1], output.Data);
         }
 
         public static Stream LoadResource(string name)
