@@ -311,6 +311,11 @@ namespace sass
                 case "fill":
                 {
                     ulong amount = ExpressionEngine.Evaluate(parameters[0], PC);
+                    if (parameters.Length == 1)
+                    {
+                        Array.Resize<string>(parameters, 2);
+                        parameters[1] = "0";
+                    }
                     listing.Output = new byte[amount];
                     for (int i = 0; i < (int)amount; i++)
                         listing.Output[i] = (byte)ExpressionEngine.Evaluate(parameters[1], PC++);
