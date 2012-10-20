@@ -72,19 +72,19 @@ Boolean operators will assemble to "1" if true, or "0" if false.
 
 Directives are indicated by a '.' or '#' as the first character, as in "#include <foo.h>".
 
-**block \[size]**: Sets aside size bytes, all set to 0. See **fill** if you require a value other than 0.
+**block \[size]**: Sets aside *size* bytes, all set to 0. See **fill** if you require a value other than 0.
 
-**db \[value], \[value], ...**: Inserts any number of 8-bit **value**s into the output.
+**db \[value], \[value], ...**: Inserts any number of 8-bit *value*s into the output.
 
-**dw \[value], \[value], ...**: Inserts any number of n-bit **value**s into the output, where n is the
+**dw \[value], \[value], ...**: Inserts any number of n-bit *value*s into the output, where n is the
   number of bits to a word in the target architecture.
 
-**echo \[message], \[message], ...**: Echos any number of **message**s to the console at assembly time. If
-  **message** is not a string, it will be treated as an expression and echoed as a number.
+**echo \[message], \[message], ...**: Echos any number of *message*s to the console at assembly time. If
+  *message* is not a string, it will be treated as an expression and echoed as a number.
 
-**fill \[size], (value)**: Inserts **size** number of **value**s into the output. Default **value** is 0.
+**fill \[size], (value)**: Inserts *size* number of *value*s into the output. Default *value* is 0.
 
-**org \[value]**: Sets the internal program counter to **value**. This does not add to the output.
+**org \[value]**: Sets the internal program counter to *value*. This does not add to the output.
 
 # Compiling from Source
 
