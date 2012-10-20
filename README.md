@@ -45,6 +45,7 @@ of the following lines of code is acceptable:
     cp (ix + 10)
     cp (10 + ix)
     cp (ix)
+    cp a, (ix)
 
 ### Expressions
 
