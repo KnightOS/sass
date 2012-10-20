@@ -70,7 +70,7 @@ Boolean operators will assemble to "1" if true, or "0" if false.
 
 ## Pre-Processor Directives
 
-Directives are indicated by a '.' or '#' as the first character, as in "#include <foo.h>".
+Directives are indicated by a '.' or '#' as the first character, as in "#include \<foo.h>".
 
 **block \[size]**: Sets aside *size* bytes, all set to 0. See **fill** if you require a value other than 0.
 
