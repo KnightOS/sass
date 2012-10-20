@@ -11,3 +11,4 @@ label1:
     .org 0x1234
 label2:
     LD BC, label2
+#include "test2.asm"

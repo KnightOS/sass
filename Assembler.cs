@@ -16,8 +16,10 @@ namespace sass
         private string[] Lines { get; set; }
         private int RootLineNumber { get; set; }
         private Stack<int> LineNumbers { get; set; }
-        private Stack<string> FileNames { get; set; } 
+        private Stack<string> FileNames { get; set; }
+        private Stack<bool> IfStack { get; set; }
         private int SuspendedLines { get; set; }
+        private int CurrentIndex { get; set; }
 
         public Assembler(InstructionSet instructionSet)
         {
@@ -37,9 +39,9 @@ namespace sass
             FileNames.Push(fileName);
             LineNumbers.Push(0);
             RootLineNumber = 0;
-            for (int i = 0; i < Lines.Length; i++)
+            for (CurrentIndex = 0; CurrentIndex < Lines.Length; CurrentIndex++)
             {
-                string line = Lines[i].Trim().TrimComments();
+                string line = Lines[CurrentIndex].Trim().TrimComments();
                 if (SuspendedLines == 0)
                 {
                     LineNumbers.Push(LineNumbers.Pop() + 1);
@@ -52,10 +54,10 @@ namespace sass
                 {
                     // Split lines up
                     var split = line.SafeSplit('\\');
-                    Lines = Lines.Take(i).Concat(split).
-                        Concat(Lines.Skip(i + 1)).ToArray();
+                    Lines = Lines.Take(CurrentIndex).Concat(split).
+                        Concat(Lines.Skip(CurrentIndex + 1)).ToArray();
                     SuspendedLines = split.Length;
-                    i--;
+                    CurrentIndex--;
                     continue;
                 }
 
@@ -313,7 +315,7 @@ namespace sass
                     ulong amount = ExpressionEngine.Evaluate(parameters[0], PC);
                     if (parameters.Length == 1)
                     {
-                        Array.Resize<string>(parameters, 2);
+                        Array.Resize<string>(ref parameters, 2);
                         parameters[1] = "0";
                     }
                     listing.Output = new byte[amount];
@@ -326,6 +328,8 @@ namespace sass
                 case "org":
                     PC = (uint)ExpressionEngine.Evaluate(parameter, PC);
                     return listing;
+                case "endfile": // Special directive
+                    return null;
             }
             return null;
         }
