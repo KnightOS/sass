@@ -64,6 +64,13 @@ namespace sass
                     continue;
                 }
 
+                if (line.SafeContains(".equ") && !line.StartsWith(".equ"))
+                {
+                    var name = line.Remove(line.SafeIndexOf(".equ"));
+                    var definition = line.Substring(line.SafeIndexOf(".equ") + 4);
+                    line = ".equ " + name.Trim() + ", " + definition.Trim();
+                }
+
                 if (line.StartsWith(".") || line.StartsWith("#")) // Directive
                 {
                     var result = HandleDirective(line);
@@ -351,6 +358,12 @@ namespace sass
                     LineNumbers.Pop();
                     FileNames.Pop();
                     return null;
+                case "equ":
+                case "define":
+                    // TODO: Macro
+                    // TODO: Equates in a different way
+                    ExpressionEngine.Equates.Add(parameters[0], (uint)ExpressionEngine.Evaluate(parameter.Substring(parameter.IndexOf(',') + 1).Trim(), PC));
+                    return listing;
             }
             return null;
         }

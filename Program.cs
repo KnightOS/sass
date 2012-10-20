@@ -48,9 +48,9 @@ namespace sass
                 else
                 {
                     if (inputFile == null)
-                        inputFile = args[++i];
+                        inputFile = args[i];
                     else if (outputFile == null)
-                        outputFile = args[++i];
+                        outputFile = args[i];
                     else
                     {
                         Console.WriteLine("Error: Invalid usage. Use sass.exe --help for usage information.");
