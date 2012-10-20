@@ -9,16 +9,69 @@ namespace sass
 {
     public class Program
     {
+        public static Dictionary<string, InstructionSet> InstructionSets;
+
         static void Main(string[] args)
         {
-            InstructionSet z80;
-            using (var stream = new StreamReader(LoadResource("sass.z80.table")))
-                z80 = InstructionSet.Load(stream.ReadToEnd());
-            var assembler = new Assembler(z80);
-            // TODO: Command line arguments
-            string file = File.ReadAllText(args[0]);
-            var output = assembler.Assemble(file, "foo.asm");
-            File.WriteAllBytes(args[1], output.Data);
+            Console.WriteLine("SirCmpwn's Assembler     Copyright Drew DeVault 2012");
+
+            InstructionSets = new Dictionary<string, InstructionSet>();
+            InstructionSets.Add("z80", LoadInternalSet("sass.z80.table"));
+            string instructionSet = "z80"; // Default
+            string inputFile = null, outputFile = null;
+
+            for (int i = 0; i < args.Length; i++)
+            {
+                string arg = args[i];
+                if (arg.StartsWith("-"))
+                {
+                    switch (arg)
+                    {
+                        case "--input":
+                        case "--input-file":
+                            inputFile = args[++i];
+                            break;
+                        case "--output":
+                        case "--output-file":
+                            outputFile = args[++i];
+                            break;
+                        case "-h":
+                        case "-?":
+                        case "/?":
+                        case "/help":
+                        case "-help":
+                        case "--help":
+                            DisplayHelp();
+                            return;
+                    }
+                }
+                else
+                {
+                    if (inputFile == null)
+                        inputFile = args[++i];
+                    else if (outputFile == null)
+                        outputFile = args[++i];
+                    else
+                    {
+                        Console.WriteLine("Error: Invalid usage. Use sass.exe --help for usage information.");
+                        return;
+                    }
+                }
+            }
+
+            if (inputFile == null)
+            {
+                Console.WriteLine("No input file specified. Use sass.exe --help for usage information.");
+                return;
+            }
+            if (outputFile == null)
+                outputFile = Path.GetFileNameWithoutExtension(inputFile) + ".bin";
+
+            var assembler = new Assembler(InstructionSets[instructionSet]);
+            string file = File.ReadAllText(inputFile);
+            var output = assembler.Assemble(file, inputFile);
+
+            File.WriteAllBytes(outputFile, output.Data);
             var errors = from l in output.Listing
                          where l.Warning != AssemblyWarning.None || l.Error != AssemblyError.None
                          orderby l.RootLineNumber
@@ -35,6 +88,19 @@ namespace sass
         public static Stream LoadResource(string name)
         {
             return Assembly.GetExecutingAssembly().GetManifestResourceStream(name);
+        }
+
+        private static InstructionSet LoadInternalSet(string name)
+        {
+            InstructionSet set;
+            using (var stream = new StreamReader(LoadResource(name)))
+                set = InstructionSet.Load(stream.ReadToEnd());
+            return set;
+        }
+
+        private static void DisplayHelp()
+        {
+            // TODO
         }
     }
 }

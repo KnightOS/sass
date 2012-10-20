@@ -12,3 +12,4 @@ label1:
 label2:
     LD BC, label2
 #include "test2.asm"
+    add a, 1

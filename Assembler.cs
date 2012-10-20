@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.IO;
 
 namespace sass
 {
@@ -11,6 +12,7 @@ namespace sass
         public ExpressionEngine ExpressionEngine { get; set; }
         public AssemblyOutput Output { get; set; }
         public Encoding Encoding { get; set; }
+        public List<string> IncludePaths { get; set; }
 
         private uint PC { get; set; }
         private string[] Lines { get; set; }
@@ -28,6 +30,7 @@ namespace sass
             SuspendedLines = 0;
             LineNumbers = new Stack<int>();
             FileNames = new Stack<string>();
+            IncludePaths = new List<string>();
         }
 
         public AssemblyOutput Assemble(string assembly, string fileName = null)
@@ -328,8 +331,39 @@ namespace sass
                 case "org":
                     PC = (uint)ExpressionEngine.Evaluate(parameter, PC);
                     return listing;
+                case "include":
+                    {
+                        string file = GetIncludeFile(parameter);
+                        if (file == null)
+                        {
+                            listing.Error = AssemblyError.FileNotFound;
+                            return listing;
+                        }
+                        FileNames.Push(parameter);
+                        LineNumbers.Push(0);
+                        string includedFile = File.ReadAllText(file) + "\n.endfile";
+                        string[] lines = includedFile.Replace("\r", "").Split('\n');
+                        Lines = Lines.Take(CurrentIndex + 1).Concat(lines).Concat(Lines.Skip(CurrentIndex + 1)).ToArray();
+                        return listing;
+                    }
                 case "endfile": // Special directive
+                    RootLineNumber--;
+                    LineNumbers.Pop();
+                    FileNames.Pop();
                     return null;
+            }
+            return null;
+        }
+
+        private string GetIncludeFile(string file)
+        {
+            file = file.Substring(1, file.Length - 2); // Remove <> or ""
+            if (File.Exists(file))
+                return file;
+            foreach (var path in IncludePaths)
+            {
+                if (File.Exists(Path.Combine(path, file)))
+                    return Path.Combine(path, file);
             }
             return null;
         }

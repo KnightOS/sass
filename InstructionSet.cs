@@ -67,6 +67,11 @@ namespace sass
                 result.ImmediateValues = new Dictionary<char, ImmediateValue>();
                 for (int i = 0; i < instruction.Match.Length; i++, j++)
                 {
+                    if (j >= code.Length)
+                    {
+                        match = false;
+                        break;
+                    }
                     if (instruction.Match[i] == '_') // Required whitespace
                     {
                         if (requiredWhitespaceMet && char.IsWhiteSpace(code[j]))
