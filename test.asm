@@ -5,3 +5,9 @@ label1:
     LD HL, label1
     LD (label1), A
     LD (IX + 14), A
+    .dw 0x15
+    .echo "Hello, world!", $
+    .fill 20, $
+    .org 0x1234
+label2:
+    LD BC, label2

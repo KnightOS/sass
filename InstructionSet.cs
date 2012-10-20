@@ -7,6 +7,8 @@ namespace sass
 {
     public class InstructionSet
     {
+        public int WordSize { get; set; }
+
         private Dictionary<string, OperandGroup> OperandGroups { get; set; }
         private List<Instruction> Instructions { get; set; }
 
@@ -14,6 +16,7 @@ namespace sass
         {
             OperandGroups = new Dictionary<string, OperandGroup>();
             Instructions = new List<Instruction>();
+            WordSize = 16;
         }
 
         public static InstructionSet Load(string definition)
@@ -42,6 +45,8 @@ namespace sass
                     value = value.Substring(value.IndexOf(' ') + 1);
                     table.Instructions.Add(new Instruction(match.ToLower(), value.Replace(" ", "")));
                 }
+                else if (line.StartsWith("WORDSIZE "))
+                    table.WordSize = int.Parse(line.Substring(9));
             }
             return table;
         }

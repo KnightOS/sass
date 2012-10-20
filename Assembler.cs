@@ -9,7 +9,12 @@ namespace sass
     {
         public InstructionSet InstructionSet { get; set; }
         public ExpressionEngine ExpressionEngine { get; set; }
+        public AssemblyOutput Output { get; set; }
+        public Encoding Encoding { get; set; }
 
+        private uint PC { get; set; }
+        private string[] Lines { get; set; }
+        private int RootLineNumber { get; set; }
         private Stack<int> LineNumbers { get; set; }
         private Stack<string> FileNames { get; set; } 
         private int SuspendedLines { get; set; }
@@ -27,18 +32,18 @@ namespace sass
         {
             var output = new AssemblyOutput();
             assembly = assembly.Replace("\r", "");
-            uint PC = 0;
-            string[] lines = assembly.Split('\n');
+            PC = 0;
+            Lines = assembly.Split('\n');
             FileNames.Push(fileName);
             LineNumbers.Push(0);
-            int rootLineNumber = 0;
-            for (int i = 0; i < lines.Length; i++)
+            RootLineNumber = 0;
+            for (int i = 0; i < Lines.Length; i++)
             {
-                string line = lines[i].Trim().TrimComments();
+                string line = Lines[i].Trim().TrimComments();
                 if (SuspendedLines == 0)
                 {
                     LineNumbers.Push(LineNumbers.Pop() + 1);
-                    rootLineNumber++;
+                    RootLineNumber++;
                 }
                 else
                     SuspendedLines--;
@@ -47,8 +52,8 @@ namespace sass
                 {
                     // Split lines up
                     var split = line.SafeSplit('\\');
-                    lines = lines.Take(i).Concat(split).
-                        Concat(lines.Skip(i + 1)).ToArray();
+                    Lines = Lines.Take(i).Concat(split).
+                        Concat(Lines.Skip(i + 1)).ToArray();
                     SuspendedLines = split.Length;
                     i--;
                     continue;
@@ -56,6 +61,10 @@ namespace sass
 
                 if (line.StartsWith(".") || line.StartsWith("#")) // Directive
                 {
+                    var result = HandleDirective(line);
+                    if (result != null)
+                        output.Listing.Add(result);
+                    continue;
                 }
                 else if (line.StartsWith(":") || line.EndsWith(":")) // Label
                 {
@@ -85,7 +94,7 @@ namespace sass
                             Address = PC,
                             FileName = FileNames.Peek(),
                             LineNumber = LineNumbers.Peek(),
-                            RootLineNumber = rootLineNumber
+                            RootLineNumber = RootLineNumber
                         });
                     }
                     output.Listing.Add(new Listing
@@ -97,7 +106,7 @@ namespace sass
                         Address = PC,
                         FileName = FileNames.Peek(),
                         LineNumber = LineNumbers.Peek(),
-                        RootLineNumber = rootLineNumber
+                        RootLineNumber = RootLineNumber
                     });
                     ExpressionEngine.Equates.Add(label, PC);
                 }
@@ -120,7 +129,7 @@ namespace sass
                             Address = PC,
                             FileName = FileNames.Peek(),
                             LineNumber = LineNumbers.Peek(),
-                            RootLineNumber = rootLineNumber
+                            RootLineNumber = RootLineNumber
                         });
                     }
                     else
@@ -136,7 +145,7 @@ namespace sass
                             Address = PC,
                             FileName = FileNames.Peek(),
                             LineNumber = LineNumbers.Peek(),
-                            RootLineNumber = rootLineNumber
+                            RootLineNumber = RootLineNumber
                         });
                         PC += match.Length;
                     }
@@ -151,6 +160,17 @@ namespace sass
             for (int i = 0; i < output.Listing.Count; i++)
             {
                 var entry = output.Listing[i];
+                RootLineNumber = entry.RootLineNumber;
+                PC = entry.Address;
+                LineNumbers = new Stack<int>(new[] { entry.LineNumber });
+                if (entry.CodeType == CodeType.Directive)
+                {
+                    if (entry.PostponeEvalulation)
+                        output.Listing[i] = HandleDirective(entry.Code, true);
+                    if (output.Listing[i].Output != null)
+                        finalBinary.AddRange(output.Listing[i].Output);
+                    continue;
+                }
                 if (entry.Error != AssemblyError.None)
                     continue;
                 if (entry.CodeType == CodeType.Instruction)
@@ -198,5 +218,119 @@ namespace sass
                 little = result.Substring(i, 8) + little;
             return little;
         }
+
+        #region Directives
+
+        private Listing HandleDirective(string line, bool passTwo = false)
+        {
+            string directive = line.Substring(1).Trim();
+            string[] parameters = new string[0];
+            string parameter = "";
+            if (directive.SafeContains(' '))
+            {
+                parameter = directive.Substring(directive.SafeIndexOf(' ') + 1);
+                parameters = parameter.SafeSplit(',');
+                directive = directive.Remove(directive.SafeIndexOf(' '));
+            }
+            var listing = new Listing
+            {
+                Code = line,
+                CodeType = CodeType.Directive,
+                Address = PC,
+                Error = AssemblyError.None,
+                Warning = AssemblyWarning.None,
+                FileName = FileNames.Peek(),
+                LineNumber = LineNumbers.Peek(),
+                RootLineNumber = RootLineNumber
+            };
+            switch (directive)
+            {
+                case "block":
+                {
+                    ulong amount = ExpressionEngine.Evaluate(parameter, PC);
+                    listing.Output = new byte[amount];
+                    PC += (uint)amount;
+                    return listing;
+                }
+                case "byte":
+                case "db":
+                {
+                    if (passTwo)
+                    {
+                        var result = new List<byte>();
+                        foreach (var item in parameters)
+                            result.Add((byte)ExpressionEngine.Evaluate(item, PC++));
+                        listing.Output = result.ToArray();
+                        return listing;
+                    }
+                    else
+                    {
+                        listing.Output = new byte[parameters.Length];
+                        listing.PostponeEvalulation = true;
+                        PC += (uint)listing.Output.Length;
+                        return listing;
+                    }
+                }
+                case "word":
+                case "dw":
+                {
+                    if (passTwo)
+                    {
+                        var result = new List<byte>();
+                        foreach (var item in parameters)
+                            result.AddRange(TruncateWord(ExpressionEngine.Evaluate(item, PC++)));
+                        listing.Output = result.ToArray();
+                        return listing;
+                    }
+                    else
+                    {
+                        listing.Output = new byte[parameters.Length * (InstructionSet.WordSize / 8)];
+                        listing.PostponeEvalulation = true;
+                        PC += (uint)listing.Output.Length;
+                        return listing;
+                    }
+                }
+                case "error":
+                case "echo":
+                {
+                    string output = "";
+                    foreach (var item in parameters)
+                    {
+                        if (item.Trim().StartsWith("\"") && item.EndsWith("\""))
+                            output += item.Substring(1, item.Length - 2);
+                        else
+                            output += ExpressionEngine.Evaluate(item, PC);
+                    }
+                    Console.WriteLine((directive == "error" ? "User Error: " : "") + output);
+                    return listing;
+                }
+                case "nolist":
+                case "list": // TODO: Do either of these really matter?
+                case "end":
+                    return listing;
+                case "fill":
+                {
+                    ulong amount = ExpressionEngine.Evaluate(parameters[0], PC);
+                    listing.Output = new byte[amount];
+                    for (int i = 0; i < (int)amount; i++)
+                        listing.Output[i] = (byte)ExpressionEngine.Evaluate(parameters[1], PC++);
+                    return listing;
+                }
+                case "option": // TODO: Spasm-style bitmap imports
+                    return listing;
+                case "org":
+                    PC = (uint)ExpressionEngine.Evaluate(parameter, PC);
+                    return listing;
+            }
+            return null;
+        }
+
+        private byte[] TruncateWord(ulong value)
+        {
+            var array = BitConverter.GetBytes(value);
+            return array.Take(InstructionSet.WordSize / 8).ToArray();
+        }
+
+        #endregion
     }
 }

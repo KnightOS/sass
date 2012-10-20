@@ -17,5 +17,7 @@ namespace sass
         public int LineNumber { get; set; }
         public int RootLineNumber { get; set; }
         public string FileName { get; set; }
+        // True to postpone evaluation of this line until the second pass
+        public bool PostponeEvalulation { get; set; }
     }
 }

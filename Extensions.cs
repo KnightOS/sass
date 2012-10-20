@@ -51,6 +51,22 @@ namespace sass
             return value.Trim();
         }
 
+        public static int SafeIndexOf(this string value, char needle)
+        {
+            value = value.Trim();
+            bool inString = false, inChar = false;
+            for (int i = 0; i < value.Length; i++)
+            {
+                if (value[i] == needle && !inString && !inChar)
+                    return i;
+                if (value[i] == '"' && !inChar)
+                    inString = !inString;
+                if (value[i] == '\'' && !inString)
+                    inChar = !inChar;
+            }
+            return -1;
+        }
+
         /// <summary>
         /// Checks for value contained within a string, outside of '' and ""
         /// </summary>
