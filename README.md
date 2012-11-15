@@ -96,5 +96,5 @@ Directives are indicated by a '.' or '#' as the first character, as in "#include
 
 Feel free to fork and submit pull requests with your changes. You'll have good results with small, focused
 pull requests, rather than broad, sweeping ones. You can also submit issues for bugs or feature requests.
-You may email me as well at sir@cmpwn.com. For general z80 assistance, you should join #ti on
-irc.freenode.net.
+You may email me as well at [sir@cmpwn.com](mailto:sir@cmpwn.com). For general z80 assistance, you should
+join #ti on irc.eversible.com (EFNet).
