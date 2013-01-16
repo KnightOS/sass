@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "sass", "sass.csproj", "{D04D976D-CF1E-4945-88BC-18B290CCE90F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "sass", "sass/sass.csproj", "{D04D976D-CF1E-4945-88BC-18B290CCE90F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
