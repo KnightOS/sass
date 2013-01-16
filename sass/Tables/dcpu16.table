@@ -1,0 +1,47 @@
+﻿# DCPU-16 INSTRUCTION SET
+
+#### DCPU-16 PROPERTIES
+WORDSIZE 16
+
+#### OPERAND GROUPS
+OPERAND op A                   00000
+OPERAND op B                   00001
+OPERAND op C                   00010
+OPERAND op X                   00011
+OPERAND op Y                   00100
+OPERAND op Z                   00101
+OPERAND op I                   00110
+OPERAND op J                   00111
+OPERAND op [-A-]               01000
+OPERAND op [-B-]               01001
+OPERAND op [-C-]               01010
+OPERAND op [-X-]               01011
+OPERAND op [-Y-]               01100
+OPERAND op [-Z-]               01101
+OPERAND op [-I-]               01110
+OPERAND op [-J-]               01111
+OPERAND op [-A-+-%A<16>-]      10000
+OPERAND op [-B-+-%A<16>-]      10001
+OPERAND op [-C-+-%A<16>-]      10010
+OPERAND op [-X-+-%A<16>-]      10011
+OPERAND op [-Y-+-%A<16>-]      10100
+OPERAND op [-Z-+-%A<16>-]      10101
+OPERAND op [-I-+-%A<16>-]      10110
+OPERAND op [-J-+-%A<16>-]      10111
+    OPERAND op [-%A<16>-+-A-]  10000
+    OPERAND op [-%A<16>-+-B-]  10001
+    OPERAND op [-%A<16>-+-C-]  10010
+    OPERAND op [-%A<16>-+-X-]  10011
+    OPERAND op [-%A<16>-+-Y-]  10100
+    OPERAND op [-%A<16>-+-Z-]  10101
+    OPERAND op [-%A<16>-+-I-]  10110
+    OPERAND op [-%A<16>-+-J-]  10111
+OPERAND op PUSH                11000
+    OPERAND op [-\-\-SP-]      11000
+OPERAND op POP                 11000
+    OPERAND op [-++SP-]	       11000
+OPERAND op PEEK                11001
+    OPERAND op [-SP-]          11001
+OPERAND op PICK_%A<16>         11010
+    OPERAND op [-SP-+-%A<16>-] 11010
+    OPERAND op [-%A<16>-+-SP-] 11010

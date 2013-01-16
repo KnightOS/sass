@@ -62,7 +62,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
-    <EmbeddedResource Include="z80.table" />
+    <EmbeddedResource Include="Tables\z80.table" />
+    <None Include="Tables\dcpu16.table" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="test.asm">

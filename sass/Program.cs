@@ -16,7 +16,8 @@ namespace sass
             Console.WriteLine("SirCmpwn's Assembler     Copyright Drew DeVault 2012");
 
             InstructionSets = new Dictionary<string, InstructionSet>();
-            InstructionSets.Add("z80", LoadInternalSet("sass.z80.table"));
+            InstructionSets.Add("z80", LoadInternalSet("sass.Tables.z80.table"));
+            InstructionSets.Add("dcpu16", LoadInternalSet("sass.Tables.dcpu16.table"));
             string instructionSet = "z80"; // Default
             string inputFile = null, outputFile = null;
 
@@ -34,6 +35,9 @@ namespace sass
                         case "--output":
                         case "--output-file":
                             outputFile = args[++i];
+                            break;
+                        case "--instr":
+                            instructionSet = args[++i];
                             break;
                         case "-h":
                         case "-?":
