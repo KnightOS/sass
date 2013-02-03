@@ -55,6 +55,7 @@
     <Compile Include="Instruction.cs" />
     <Compile Include="InstructionSet.cs" />
     <Compile Include="Listing.cs" />
+    <Compile Include="Macro.cs" />
     <Compile Include="Operand.cs" />
     <Compile Include="OperandGroup.cs" />
     <Compile Include="Program.cs" />

@@ -11,5 +11,7 @@ namespace sass
         InvalidInstruction = 1,
         InvalidLabel = 2,
         FileNotFound,
+        InvalidDirective,
+        DuplicateName,
     }
 }
