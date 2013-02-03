@@ -66,7 +66,33 @@ Boolean operators will assemble to "1" if true, or "0" if false.
 
 ### Macros
 
-**TODO**
+Macros are defined through `.macro` and may be used in most conditions. To define a macro, use something like
+this:
+
+    .macro example
+        ld a, b
+    .endmacro
+
+This defines a parameterless macro called "example". You needn't indent the contents of the macro; it's done
+here for clarity. You may also define parameters:
+
+    .macro example(foo, bar)
+        ld a, foo
+        ld b, bar
+    .endmacro
+
+This is a simple substitution macro. When called (like `example(a, b)`), 'foo' and 'bar' will be replaced with
+'a' and 'b' respectively. Here's a more in-depth example:
+
+    .macro example(foo, bar)
+        ld a, foo
+        ld b, bar
+    .endmacro
+    .macro add(a, b)
+        a+b
+    .endmacro
+    example(1, 2) ; Becomes ld a, 1 \ ld b, 2
+    ld a, add(2, 3) ; Becomes ld a, 2+3
 
 ## Pre-Processor Directives
 
