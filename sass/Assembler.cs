@@ -46,7 +46,7 @@ namespace sass
             RootLineNumber = 0;
             for (CurrentIndex = 0; CurrentIndex < Lines.Length; CurrentIndex++)
             {
-                string line = Lines[CurrentIndex].Trim().TrimComments();
+                string line = Lines[CurrentIndex].Trim().TrimComments().ToLower();
                 if (SuspendedLines == 0)
                 {
                     LineNumbers.Push(LineNumbers.Pop() + 1);
@@ -82,6 +82,7 @@ namespace sass
                         parameters = directive.Substring(directive.SafeIndexOf(' ')).Split(',');
                     if (directive.StartsWith("macro"))
                     {
+                        var definitionLine = line; // Used to update the listing later
                         if (parameters.Length == 0)
                         {
                             output.Listing.Add(new Listing
@@ -118,6 +119,7 @@ namespace sass
                                 break;
                             macro.Code += line + Environment.NewLine;
                         }
+                        macro.Code = macro.Code.Remove(macro.Code.Length - Environment.NewLine.Length);
                         macro.Name = macro.Name.ToLower();
                         if (Macros.Any(m => m.Name == macro.Name))
                         {
@@ -135,6 +137,18 @@ namespace sass
                             continue;
                         }
                         Macros.Add(macro);
+                        // Add an entry to the listing
+                        output.Listing.Add(new Listing
+                        {
+                            Code = definitionLine,
+                            CodeType = CodeType.Directive,
+                            Error = AssemblyError.None,
+                            Warning = AssemblyWarning.None,
+                            Address = PC,
+                            FileName = FileNames.Peek(),
+                            LineNumber = LineNumbers.Peek(),
+                            RootLineNumber = RootLineNumber
+                        });
                     }
                     else if (directive.StartsWith("include"))
                     {
@@ -195,7 +209,62 @@ namespace sass
                 else
                 {
                     // Check for macro
-                    // TODO
+                    Macro macroMatch = null;
+                    string[] parameters = null;
+                    string parameterDefinition = null;
+                    foreach (var macro in Macros)
+                    {
+                        if (line.SafeContains(macro.Name))
+                        {
+                            // Try to match
+                            int startIndex = line.SafeIndexOf(macro.Name);
+                            int endIndex = startIndex + macro.Name.Length - 1;
+                            if (macro.Parameters.Length != 0)
+                            {
+                                if (line[endIndex + 1] != '(')
+                                    continue;
+                                parameterDefinition = line.Substring(endIndex + 2, line.SafeIndexOf(')') - (endIndex + 2));
+                                parameters = parameterDefinition.SafeSplit(',');
+                                if (parameters.Length != macro.Parameters.Length)
+                                    continue;
+                                // Matched
+                                macroMatch = macro;
+                                break;
+                            }
+                        }
+                    }
+                    if (macroMatch != null)
+                    {
+                        // Add an entry to the listing
+                        output.Listing.Add(new Listing
+                        {
+                            Code = line,
+                            CodeType = CodeType.Directive,
+                            Error = AssemblyError.None,
+                            Warning = AssemblyWarning.None,
+                            Address = PC,
+                            FileName = FileNames.Peek(),
+                            LineNumber = LineNumbers.Peek(),
+                            RootLineNumber = RootLineNumber
+                        });
+                        var code = macroMatch.Code;
+                        int index = 0;
+                        foreach (var parameter in macroMatch.Parameters)
+                            code = code.Replace(parameter, parameters[index++]);
+                        string newLine;
+                        if (parameterDefinition != null)
+                            newLine = line.Replace(macroMatch.Name + "(" + parameterDefinition + ")", code);
+                        else
+                            newLine = line.Replace(macroMatch.Name, code);
+                        var newLines = newLine.Replace("\r\n", "\n").Split('\n');
+                        SuspendedLines += newLines.Length;
+                        // Insert macro
+                        Lines = Lines.Take(CurrentIndex).Concat(newLines).Concat(Lines.Skip(CurrentIndex + 1)).ToArray();
+                        CurrentIndex--;
+                        continue;
+                    }
+                    if (string.IsNullOrEmpty(line))
+                        continue;
                     // Check instructions
                     var match = InstructionSet.Match(line);
                     if (match == null)

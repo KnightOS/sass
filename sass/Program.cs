@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.IO;
 using System.Reflection;
+using System.Diagnostics;
 
 namespace sass
 {
@@ -72,7 +73,10 @@ namespace sass
 
             var assembler = new Assembler(InstructionSets[instructionSet]);
             string file = File.ReadAllText(inputFile);
+            var watch = new Stopwatch();
+            watch.Start();
             var output = assembler.Assemble(file, inputFile);
+            watch.Stop();
 
             File.WriteAllBytes(outputFile, output.Data);
             var errors = from l in output.Listing
@@ -86,6 +90,7 @@ namespace sass
                 if (listing.Warning != AssemblyWarning.None)
                     Console.WriteLine(listing.FileName + " [" + listing.LineNumber + "]: Warning: " + listing.Warning);
             }
+            Console.WriteLine("Assembly done: {0} ms", watch.ElapsedMilliseconds);
         }
 
         public static Stream LoadResource(string name)
