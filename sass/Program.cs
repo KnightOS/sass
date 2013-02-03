@@ -17,7 +17,6 @@ namespace sass
 
             InstructionSets = new Dictionary<string, InstructionSet>();
             InstructionSets.Add("z80", LoadInternalSet("sass.Tables.z80.table"));
-            InstructionSets.Add("dcpu16", LoadInternalSet("sass.Tables.dcpu16.table"));
             string instructionSet = "z80"; // Default
             string inputFile = null, outputFile = null;
 
