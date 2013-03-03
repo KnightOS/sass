@@ -1,5 +1,4 @@
-﻿add a, b
-
-#include "test2.asm"
-
-add b, a
+﻿    ld a, 0x1234
+label:
+    add a, b
+    add b, a

@@ -39,6 +39,7 @@ namespace sass
         public AssemblyOutput Assemble(string assembly, string fileName = null)
         {
             Output = new AssemblyOutput();
+            Output.InstructionSet = InstructionSet;
             assembly = assembly.Replace("\r", "");
             PC = 0;
             Lines = assembly.Split('\n');

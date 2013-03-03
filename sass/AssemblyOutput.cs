@@ -12,6 +12,7 @@ namespace sass
             Listing = new List<Listing>();
         }
 
+        public InstructionSet InstructionSet { get; set; }
         public byte[] Data { get; set; }
         public List<Listing> Listing { get; set; }
     }
