@@ -43,8 +43,8 @@ You may customize sass's usage at the command line with a number of parameters.
 
 Out of the box, sass supports the following architectures:
 
-* z80 [z80]
-* *GameBoy Assembly [LR35902/gbz80]* (Planned)
+* z80 [`z80`]
+* *GameBoy Assembly [`LR35902` or `gbz80`]* (Planned)
 
 In [brackets], the instruction set key is shown for use whith the --instruction-set command line parameter.
 If not otherwise specified, the default instruction set is z80.
