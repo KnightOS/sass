@@ -12,7 +12,7 @@ namespace sass
     {
         public static Dictionary<string, InstructionSet> InstructionSets;
 
-        static void Main(string[] args)
+        public static int Main(string[] args)
         {
             Console.WriteLine("SirCmpwn's Assembler     Copyright Drew DeVault 2012");
 
@@ -46,7 +46,7 @@ namespace sass
                         case "-help":
                         case "--help":
                             DisplayHelp();
-                            return;
+                            return 0;
                     }
                 }
                 else
@@ -58,7 +58,7 @@ namespace sass
                     else
                     {
                         Console.WriteLine("Error: Invalid usage. Use sass.exe --help for usage information.");
-                        return;
+                        return 1;
                     }
                 }
             }
@@ -66,7 +66,7 @@ namespace sass
             if (inputFile == null)
             {
                 Console.WriteLine("No input file specified. Use sass.exe --help for usage information.");
-                return;
+                return 1;
             }
             if (outputFile == null)
                 outputFile = Path.GetFileNameWithoutExtension(inputFile) + ".bin";
@@ -91,6 +91,7 @@ namespace sass
                     Console.WriteLine(listing.FileName + " [" + listing.LineNumber + "]: Warning: " + listing.Warning);
             }
             Console.WriteLine("Assembly done: {0} ms", watch.ElapsedMilliseconds);
+            return errors.Count();
         }
 
         public static Stream LoadResource(string name)

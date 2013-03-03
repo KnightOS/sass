@@ -23,6 +23,7 @@ namespace sass
         private Stack<bool> IfStack { get; set; }
         private int SuspendedLines { get; set; }
         private int CurrentIndex { get; set; }
+        private string CurrentLine { get; set; }
 
         public Assembler(InstructionSet instructionSet)
         {
@@ -37,7 +38,7 @@ namespace sass
 
         public AssemblyOutput Assemble(string assembly, string fileName = null)
         {
-            var output = new AssemblyOutput();
+            Output = new AssemblyOutput();
             assembly = assembly.Replace("\r", "");
             PC = 0;
             Lines = assembly.Split('\n');
@@ -46,7 +47,7 @@ namespace sass
             RootLineNumber = 0;
             for (CurrentIndex = 0; CurrentIndex < Lines.Length; CurrentIndex++)
             {
-                string line = Lines[CurrentIndex].Trim().TrimComments().ToLower();
+                CurrentLine = Lines[CurrentIndex].Trim().TrimComments().ToLower();
                 if (SuspendedLines == 0)
                 {
                     LineNumbers.Push(LineNumbers.Pop() + 1);
@@ -55,10 +56,10 @@ namespace sass
                 else
                     SuspendedLines--;
 
-                if (line.SafeContains('\\'))
+                if (CurrentLine.SafeContains('\\'))
                 {
                     // Split lines up
-                    var split = line.SafeSplit('\\');
+                    var split = CurrentLine.SafeSplit('\\');
                     Lines = Lines.Take(CurrentIndex).Concat(split).
                         Concat(Lines.Skip(CurrentIndex + 1)).ToArray();
                     SuspendedLines = split.Length;
@@ -66,36 +67,26 @@ namespace sass
                     continue;
                 }
 
-                if (line.SafeContains(".equ") && !line.StartsWith(".equ"))
+                if (CurrentLine.SafeContains(".equ") && !CurrentLine.StartsWith(".equ"))
                 {
-                    var name = line.Remove(line.SafeIndexOf(".equ"));
-                    var definition = line.Substring(line.SafeIndexOf(".equ") + 4);
-                    line = ".equ " + name.Trim() + ", " + definition.Trim();
+                    var name = CurrentLine.Remove(CurrentLine.SafeIndexOf(".equ"));
+                    var definition = CurrentLine.Substring(CurrentLine.SafeIndexOf(".equ") + 4);
+                    CurrentLine = ".equ " + name.Trim() + ", " + definition.Trim();
                 }
 
-                if (line.StartsWith(".") || line.StartsWith("#")) // Directive
+                if (CurrentLine.StartsWith(".") || CurrentLine.StartsWith("#")) // Directive
                 {
                     // Some directives need to be handled higher up
-                    var directive = line.Substring(1).Trim().ToLower();
+                    var directive = CurrentLine.Substring(1).Trim().ToLower();
                     string[] parameters = new string[0];
                     if (directive.SafeIndexOf(' ') != -1)
                         parameters = directive.Substring(directive.SafeIndexOf(' ')).Split(',');
                     if (directive.StartsWith("macro"))
                     {
-                        var definitionLine = line; // Used to update the listing later
+                        var definitionLine = CurrentLine; // Used to update the listing later
                         if (parameters.Length == 0)
                         {
-                            output.Listing.Add(new Listing
-                            {
-                                Code = line,
-                                CodeType = CodeType.Directive,
-                                Error = AssemblyError.InvalidDirective,
-                                Warning = AssemblyWarning.None,
-                                Address = PC,
-                                FileName = FileNames.Peek(),
-                                LineNumber = LineNumbers.Peek(),
-                                RootLineNumber = RootLineNumber
-                            });
+                            AddError(CodeType.Directive, AssemblyError.InvalidDirective);
                             continue;
                         }
                         string definition = directive.Substring(directive.SafeIndexOf(' ')).Trim();
@@ -112,33 +103,23 @@ namespace sass
                             macro.Name = definition; // TODO: Consider enforcing character usage restrictions
                         for (CurrentIndex++; CurrentIndex < Lines.Length; CurrentIndex++)
                         {
-                            line = Lines[CurrentIndex].Trim().TrimComments();
+                            CurrentLine = Lines[CurrentIndex].Trim().TrimComments();
                             LineNumbers.Push(LineNumbers.Pop() + 1);
                             RootLineNumber++;
-                            if (line == ".endmacro" || line == "#endmacro")
+                            if (CurrentLine == ".endmacro" || CurrentLine == "#endmacro")
                                 break;
-                            macro.Code += line + Environment.NewLine;
+                            macro.Code += CurrentLine + Environment.NewLine;
                         }
                         macro.Code = macro.Code.Remove(macro.Code.Length - Environment.NewLine.Length);
                         macro.Name = macro.Name.ToLower();
                         if (Macros.Any(m => m.Name == macro.Name))
                         {
-                            output.Listing.Add(new Listing
-                            {
-                                Code = line,
-                                CodeType = CodeType.Directive,
-                                Error = AssemblyError.DuplicateName,
-                                Warning = AssemblyWarning.None,
-                                Address = PC,
-                                FileName = FileNames.Peek(),
-                                LineNumber = LineNumbers.Peek(),
-                                RootLineNumber = RootLineNumber
-                            });
+                            AddError(CodeType.Label, AssemblyError.DuplicateName);
                             continue;
                         }
                         Macros.Add(macro);
                         // Add an entry to the listing
-                        output.Listing.Add(new Listing
+                        Output.Listing.Add(new Listing
                         {
                             Code = definitionLine,
                             CodeType = CodeType.Directive,
@@ -152,23 +133,28 @@ namespace sass
                     }
                     else if (directive.StartsWith("include"))
                     {
+                        if (parameters.Length == 0)
+                        {
+                            AddError(CodeType.Directive, AssemblyError.InvalidDirective);
+                            continue;
+                        }
 
                     }
                     else
                     {
-                        var result = HandleDirective(line);
+                        var result = HandleDirective(CurrentLine);
                         if (result != null)
-                            output.Listing.Add(result);
+                            Output.Listing.Add(result);
                     }
                     continue;
                 }
-                else if (line.StartsWith(":") || line.EndsWith(":")) // Label
+                else if (CurrentLine.StartsWith(":") || CurrentLine.EndsWith(":")) // Label
                 {
                     string label;
-                    if (line.StartsWith(":"))
-                        label = line.Substring(1).Trim();
+                    if (CurrentLine.StartsWith(":"))
+                        label = CurrentLine.Substring(1).Trim();
                     else
-                        label = line.Remove(line.Length - 1).Trim();
+                        label = CurrentLine.Remove(CurrentLine.Length - 1).Trim();
                     label = label.ToLower();
                     bool valid = true;
                     for (int k = 0; k < label.Length; k++) // Validate label
@@ -180,31 +166,22 @@ namespace sass
                         }
                     }
                     if (!valid)
+                        AddError(CodeType.Label, AssemblyError.InvalidLabel);
+                    else
                     {
-                        output.Listing.Add(new Listing
+                        Output.Listing.Add(new Listing
                         {
-                            Code = line,
+                            Code = CurrentLine,
                             CodeType = CodeType.Label,
-                            Error = AssemblyError.InvalidLabel,
+                            Error = AssemblyError.None,
                             Warning = AssemblyWarning.None,
                             Address = PC,
                             FileName = FileNames.Peek(),
                             LineNumber = LineNumbers.Peek(),
                             RootLineNumber = RootLineNumber
                         });
+                        ExpressionEngine.Equates.Add(label, PC);
                     }
-                    output.Listing.Add(new Listing
-                    {
-                        Code = line,
-                        CodeType = CodeType.Label,
-                        Error = AssemblyError.None,
-                        Warning = AssemblyWarning.None,
-                        Address = PC,
-                        FileName = FileNames.Peek(),
-                        LineNumber = LineNumbers.Peek(),
-                        RootLineNumber = RootLineNumber
-                    });
-                    ExpressionEngine.Equates.Add(label, PC);
                 }
                 else
                 {
@@ -214,16 +191,16 @@ namespace sass
                     string parameterDefinition = null;
                     foreach (var macro in Macros)
                     {
-                        if (line.SafeContains(macro.Name))
+                        if (CurrentLine.SafeContains(macro.Name))
                         {
                             // Try to match
-                            int startIndex = line.SafeIndexOf(macro.Name);
+                            int startIndex = CurrentLine.SafeIndexOf(macro.Name);
                             int endIndex = startIndex + macro.Name.Length - 1;
                             if (macro.Parameters.Length != 0)
                             {
-                                if (line[endIndex + 1] != '(')
+                                if (CurrentLine[endIndex + 1] != '(')
                                     continue;
-                                parameterDefinition = line.Substring(endIndex + 2, line.SafeIndexOf(')') - (endIndex + 2));
+                                parameterDefinition = CurrentLine.Substring(endIndex + 2, CurrentLine.SafeIndexOf(')') - (endIndex + 2));
                                 parameters = parameterDefinition.SafeSplit(',');
                                 if (parameters.Length != macro.Parameters.Length)
                                     continue;
@@ -236,26 +213,16 @@ namespace sass
                     if (macroMatch != null)
                     {
                         // Add an entry to the listing
-                        output.Listing.Add(new Listing
-                        {
-                            Code = line,
-                            CodeType = CodeType.Directive,
-                            Error = AssemblyError.None,
-                            Warning = AssemblyWarning.None,
-                            Address = PC,
-                            FileName = FileNames.Peek(),
-                            LineNumber = LineNumbers.Peek(),
-                            RootLineNumber = RootLineNumber
-                        });
+                        AddOutput(CodeType.Directive);
                         var code = macroMatch.Code;
                         int index = 0;
                         foreach (var parameter in macroMatch.Parameters)
                             code = code.Replace(parameter, parameters[index++]);
                         string newLine;
                         if (parameterDefinition != null)
-                            newLine = line.Replace(macroMatch.Name + "(" + parameterDefinition + ")", code);
+                            newLine = CurrentLine.Replace(macroMatch.Name + "(" + parameterDefinition + ")", code);
                         else
-                            newLine = line.Replace(macroMatch.Name, code);
+                            newLine = CurrentLine.Replace(macroMatch.Name, code);
                         var newLines = newLine.Replace("\r\n", "\n").Split('\n');
                         SuspendedLines += newLines.Length;
                         // Insert macro
@@ -263,32 +230,18 @@ namespace sass
                         CurrentIndex--;
                         continue;
                     }
-                    if (string.IsNullOrEmpty(line))
+                    if (string.IsNullOrEmpty(CurrentLine))
                         continue;
                     // Check instructions
-                    var match = InstructionSet.Match(line);
+                    var match = InstructionSet.Match(CurrentLine);
                     if (match == null)
-                    {
-                        // Unknown instruction
-                        output.Listing.Add(new Listing
-                        {
-                            Code = line,
-                            CodeType = CodeType.Instruction,
-                            Error = AssemblyError.InvalidInstruction,
-                            Warning = AssemblyWarning.None,
-                            Instruction = match,
-                            Address = PC,
-                            FileName = FileNames.Peek(),
-                            LineNumber = LineNumbers.Peek(),
-                            RootLineNumber = RootLineNumber
-                        });
-                    }
+                        AddError(CodeType.Instruction, AssemblyError.InvalidInstruction); // Unknown instruction
                     else
                     {
                         // Instruction to be fully assembled in the next pass
-                        output.Listing.Add(new Listing
+                        Output.Listing.Add(new Listing
                         {
-                            Code = line,
+                            Code = CurrentLine,
                             CodeType = CodeType.Instruction,
                             Error = AssemblyError.None,
                             Warning = AssemblyWarning.None,
@@ -302,7 +255,37 @@ namespace sass
                     }
                 }
             }
-            return Finish(output);
+            return Finish(Output);
+        }
+
+        private void AddOutput(CodeType type)
+        {
+            Output.Listing.Add(new Listing
+            {
+                Code = CurrentLine,
+                CodeType = type,
+                Error = AssemblyError.None,
+                Warning = AssemblyWarning.None,
+                Address = PC,
+                FileName = FileNames.Peek(),
+                LineNumber = LineNumbers.Peek(),
+                RootLineNumber = RootLineNumber
+            });
+        }
+
+        private void AddError(CodeType type, AssemblyError error)
+        {
+            Output.Listing.Add(new Listing
+            {
+                Code = CurrentLine,
+                CodeType = type,
+                Error = error,
+                Warning = AssemblyWarning.None,
+                Address = PC,
+                FileName = FileNames.Peek(),
+                LineNumber = LineNumbers.Peek(),
+                RootLineNumber = RootLineNumber
+            });
         }
 
         private AssemblyOutput Finish(AssemblyOutput output)
