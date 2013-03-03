@@ -31,26 +31,6 @@ namespace sass
                     {
                         switch (arg)
                         {
-                            case "--input":
-                            case "--input-file":
-                                inputFile = args[++i];
-                                break;
-                            case "--output":
-                            case "--output-file":
-                                outputFile = args[++i];
-                                break;
-                            case "-l":
-                            case "--listing":
-                                settings.ListingOutput = args[++i];
-                                break;
-                            case "--inc":
-                            case "--include":
-                                settings.IncludePath = args[++i].Split(';');
-                                break;
-                            case "--instr":
-                            case "--instruction-set":
-                                instructionSet = args[++i];
-                                break;
                             case "-h":
                             case "-?":
                             case "/?":
@@ -59,6 +39,30 @@ namespace sass
                             case "--help":
                                 DisplayHelp();
                                 return 0;
+                            case "--inc":
+                            case "--include":
+                                settings.IncludePath = args[++i].Split(';');
+                                break;
+                            case "--input":
+                            case "--input-file":
+                                inputFile = args[++i];
+                                break;
+                            case "--instr":
+                            case "--instruction-set":
+                                instructionSet = args[++i];
+                                break;
+                            case "-l":
+                            case "--listing":
+                                settings.ListingOutput = args[++i];
+                                break;
+                            case "--output":
+                            case "--output-file":
+                                outputFile = args[++i];
+                                break;
+                            case "-s":
+                            case "--symbols":
+                                settings.SymbolOutput = args[++i];
+                                break;
                             case "-v":
                             case "--verbose":
                                 settings.Verbose = true;
@@ -122,9 +126,9 @@ namespace sass
             foreach (var listing in errors)
             {
                 if (listing.Error != AssemblyError.None)
-                    Console.WriteLine(listing.FileName + " [" + listing.LineNumber + "]: Error: " + listing.Error);
+                    Console.WriteLine(listing.FileName + ":" + listing.LineNumber + ": Error: " + listing.Error);
                 if (listing.Warning != AssemblyWarning.None)
-                    Console.WriteLine(listing.FileName + " [" + listing.LineNumber + "]: Warning: " + listing.Warning);
+                    Console.WriteLine(listing.FileName + ":" + listing.LineNumber + ": Warning: " + listing.Warning);
             }
 
             if (settings.Verbose || settings.ListingOutput != null)
@@ -136,6 +140,9 @@ namespace sass
                     File.WriteAllText(settings.ListingOutput, listing);
             }
 
+            if (settings.SymbolOutput != null)
+                WriteSymbols(settings.SymbolOutput, assembler);
+
             Console.WriteLine("Assembly done: {0} ms", watch.ElapsedMilliseconds);
             if (Debugger.IsAttached)
             {
@@ -143,6 +150,18 @@ namespace sass
                 Console.ReadKey(true);
             }
             return errors.Count();
+        }
+
+        private static void WriteSymbols(string path, Assembler assembler)
+        {
+            using (var writer = new StreamWriter(path))
+            {
+                foreach (var symbol in assembler.ExpressionEngine.Symbols)
+                {
+                    if (symbol.Value.IsLabel)
+                        writer.WriteLine(string.Format(".equ {0} 0x{1}", symbol.Key, symbol.Value.Value.ToString("X")));
+                }
+            }
         }
 
         public static string GenerateListing(AssemblyOutput output)
@@ -157,7 +176,8 @@ namespace sass
                     return l.Output.Length * 3 - 1;
                 });
             int addressLength = output.InstructionSet.WordSize / 4 + 2;
-            string formatString = "{0,-" + maxFileLength + "}/{1,-" + maxLineNumber + "} ({2}): {3,-" + maxBinaryLength + "}  {4}" + Environment.NewLine;
+            string formatString = "{0,-" + maxFileLength + "}:{1,-" + maxLineNumber + "} ({2}): {3,-" + maxBinaryLength + "}  {4}" + Environment.NewLine;
+            string errorFormatString = "{0,-" + maxFileLength + "}:{1,-" + maxLineNumber + "} {2}: {3}" + Environment.NewLine;
             string addressFormatString = "X" + addressLength;
             // Listing format looks something like this:
             // file.asm/1 (0x1234): DE AD BE EF    ld a, 0xBEEF
@@ -182,6 +202,10 @@ namespace sass
                 }
                 else
                     binary = string.Empty;
+                if (entry.Error != AssemblyError.None)
+                    builder.AppendFormat(errorFormatString, file, line, "Error", entry.Error);
+                if (entry.Warning != AssemblyWarning.None)
+                    builder.AppendFormat(errorFormatString, file, line, "Warning", entry.Error);
                 builder.AppendFormat(formatString, file, line, address, binary, code);
             }
             return builder.ToString();

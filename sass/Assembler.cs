@@ -83,7 +83,7 @@ namespace sass
                     var directive = CurrentLine.Substring(1).Trim().ToLower();
                     string[] parameters = new string[0];
                     if (directive.SafeIndexOf(' ') != -1)
-                        parameters = directive.Substring(directive.SafeIndexOf(' ')).SafeSplit(',');
+                        parameters = directive.Substring(directive.SafeIndexOf(' ')).Trim().SafeSplit(' ');
                     if (directive.StartsWith("macro"))
                     {
                         var definitionLine = CurrentLine; // Used to update the listing later
@@ -175,14 +175,9 @@ namespace sass
                         string[] includedLines = File.ReadAllText(path).Replace("\r", "").Split('\n');
                         LineNumbers.Push(0);
                         FileNames.Push(Path.GetFileName(path));
-                        Lines = Lines.Take(CurrentIndex).Concat(includedLines).Concat(new[] { ".endinclude" }).Concat(Lines.Skip(CurrentIndex + 1)).ToArray();
+                        Lines = Lines.Take(CurrentIndex).Concat(includedLines).Concat(new[] { ".endfile" }).Concat(Lines.Skip(CurrentIndex + 1)).ToArray();
                         CurrentIndex--;
                         continue;
-                    }
-                    else if (directive == "endinclude")
-                    {
-                        FileNames.Pop();
-                        LineNumbers.Pop();
                     }
                     else
                     {
@@ -224,7 +219,7 @@ namespace sass
                             LineNumber = LineNumbers.Peek(),
                             RootLineNumber = RootLineNumber
                         });
-                        ExpressionEngine.Equates.Add(label, PC);
+                        ExpressionEngine.Symbols.Add(label, new Symbol(PC, true));
                     }
                 }
                 else
@@ -407,7 +402,7 @@ namespace sass
             if (directive.SafeContains(' '))
             {
                 parameter = directive.Substring(directive.SafeIndexOf(' ') + 1);
-                parameters = parameter.SafeSplit(',');
+                parameters = parameter.SafeSplit(' ');
                 directive = directive.Remove(directive.SafeIndexOf(' '));
             }
             var listing = new Listing
@@ -436,6 +431,7 @@ namespace sass
                     if (passTwo)
                     {
                         var result = new List<byte>();
+                        parameters = parameter.SafeSplit(',');
                         foreach (var item in parameters)
                             result.Add((byte)ExpressionEngine.Evaluate(item, PC++));
                         listing.Output = result.ToArray();
@@ -455,6 +451,7 @@ namespace sass
                     if (passTwo)
                     {
                         var result = new List<byte>();
+                        parameters = parameter.SafeSplit(',');
                         foreach (var item in parameters)
                             result.AddRange(TruncateWord(ExpressionEngine.Evaluate(item, PC++)));
                         listing.Output = result.ToArray();
@@ -528,7 +525,7 @@ namespace sass
                 case "define":
                     // TODO: Macro
                     // TODO: Equates in a different way
-                    ExpressionEngine.Equates.Add(parameters[0], (uint)ExpressionEngine.Evaluate(parameter.Substring(parameter.IndexOf(',') + 1).Trim(), PC));
+                    ExpressionEngine.Symbols.Add(parameters[0], new Symbol((uint)ExpressionEngine.Evaluate(parameter.Substring(parameter.IndexOf(' ') + 1).Trim(), PC)));
                     return listing;
             }
             return null;

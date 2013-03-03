@@ -18,7 +18,38 @@ Usage: sass.exe [parameters] [input file] [output file]
 
 #### Parameters
 
-**TODO**
+You may customize sass's usage at the command line with a number of parameters.
+
+**--help**: Displays information on sass usage and basic documentation. *Aliases: -h -? /? /help -help*
+
+**--include \[path(s)]**: Modifies the include path. This should be a semicolon-delimited list of paths to look
+  for files included with <> in. Example: `--include "/foo;/bar"` *Aliases: --inc*
+
+**--input-file \[file]**: An alternative way to specify the input file. *Aliases: --input*
+
+**--instruction-set \[set]**: Specifies the instruction set to use. May be a key to reference an internal set
+  (see [below](#supported-architectures)), or a path to a user-specified instruction set file. *Aliases: --instr*
+
+**--listing \[file]**: Specifies a file to output a listing to. *Aliases: -l*
+
+**--output-file \[file]**: An alternative way to specify the output file. *Aliases: --output*
+
+**--symbols [file]**: Outputs all labels and their addresses to a file using `.equ` so that they may be included
+  again elsewhere. *Aliases: -s*
+
+**--verbose**: Outputs a listing to standard output after assembly completion. *Aliases: -v*
+
+## Supported Architectures
+
+Out of the box, sass supports the following architectures:
+
+* z80 [z80]
+* *GameBoy Assembly [LR35902/gbz80]* (Planned)
+
+In [brackets], the instruction set key is shown for use whith the --instruction-set command line parameter.
+If not otherwise specified, the default instruction set is z80.
+
+User-specified instruction sets may be added. *TODO: Document instruction set format*
 
 ## Syntax
 
@@ -110,7 +141,12 @@ Directives are indicated by a '.' or '#' as the first character, as in "#include
 
 **fill \[size], (value)**: Inserts *size* number of *values* into the output. Default *value* is 0.
 
-**org \[value]**: Sets the internal program counter to *value*. This does not add to the output.
+**include \[path]**: Inserts the specified file's contents into the assembly. \[path] may be `"localfile"` or
+  `<includedfile>`, where the former expects the file to be in the current working directory, and the latter
+  looks for any files within the include path specified at the command line.
+
+**org \[value]**: Sets the internal program counter to *value*. This does not add to the output, but will affect
+  labels defined later on.
 
 # Compiling from Source
 

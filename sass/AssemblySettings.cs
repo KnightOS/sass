@@ -13,10 +13,12 @@ namespace sass
             Verbose = false;
             ListingOutput = null;
             IncludePath = new string[0];
+            SymbolOutput = null;
         }
 
         public bool Verbose { get; set; }
         public string ListingOutput { get; set; }
         public string[] IncludePath { get; set; }
+        public string SymbolOutput { get; set; }
     }
 }
