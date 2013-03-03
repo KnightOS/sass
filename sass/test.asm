@@ -1,4 +1,4 @@
-﻿    ld a, 0x1234
-label:
-    add a, b
+﻿    add a, b
+    #include "test2.asm"
+    ld a, 10
     add b, a

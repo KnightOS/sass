@@ -43,6 +43,10 @@ namespace sass
                             case "--listing":
                                 settings.ListingOutput = args[++i];
                                 break;
+                            case "--inc":
+                            case "--include":
+                                settings.IncludePath = args[++i].Split(';');
+                                break;
                             case "--instr":
                             case "--instruction-set":
                                 instructionSet = args[++i];
@@ -103,7 +107,7 @@ namespace sass
             else
                 selectedInstructionSet = InstructionSets[instructionSet];
 
-            var assembler = new Assembler(selectedInstructionSet);
+            var assembler = new Assembler(selectedInstructionSet, settings);
             string file = File.ReadAllText(inputFile);
             var watch = new Stopwatch();
             watch.Start();
@@ -134,7 +138,10 @@ namespace sass
 
             Console.WriteLine("Assembly done: {0} ms", watch.ElapsedMilliseconds);
             if (Debugger.IsAttached)
+            {
+                Console.WriteLine("Press any key to continue...");
                 Console.ReadKey(true);
+            }
             return errors.Count();
         }
 

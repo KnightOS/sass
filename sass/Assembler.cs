@@ -14,6 +14,7 @@ namespace sass
         public Encoding Encoding { get; set; }
         public List<string> IncludePaths { get; set; }
         public List<Macro> Macros { get; set; }
+        public AssemblySettings Settings { get; set; }
 
         private uint PC { get; set; }
         private string[] Lines { get; set; }
@@ -25,9 +26,10 @@ namespace sass
         private int CurrentIndex { get; set; }
         private string CurrentLine { get; set; }
 
-        public Assembler(InstructionSet instructionSet)
+        public Assembler(InstructionSet instructionSet, AssemblySettings settings)
         {
             InstructionSet = instructionSet;
+            Settings = settings;
             ExpressionEngine = new ExpressionEngine();
             SuspendedLines = 0;
             LineNumbers = new Stack<int>();
@@ -81,7 +83,7 @@ namespace sass
                     var directive = CurrentLine.Substring(1).Trim().ToLower();
                     string[] parameters = new string[0];
                     if (directive.SafeIndexOf(' ') != -1)
-                        parameters = directive.Substring(directive.SafeIndexOf(' ')).Split(',');
+                        parameters = directive.Substring(directive.SafeIndexOf(' ')).SafeSplit(',');
                     if (directive.StartsWith("macro"))
                     {
                         var definitionLine = CurrentLine; // Used to update the listing later
@@ -134,12 +136,53 @@ namespace sass
                     }
                     else if (directive.StartsWith("include"))
                     {
-                        if (parameters.Length == 0)
+                        if (parameters.Length != 1)
                         {
                             AddError(CodeType.Directive, AssemblyError.InvalidDirective);
                             continue;
                         }
-
+                        var path = parameters[0].Trim();
+                        if (path.StartsWith("\"") && path.EndsWith("\""))
+                        {
+                            path = path.Substring(1, path.Length - 2);
+                            if (!File.Exists(path))
+                            {
+                                AddError(CodeType.Directive, AssemblyError.FileNotFound);
+                                continue;
+                            }
+                        }
+                        else if (path.StartsWith("<") && path.EndsWith(">"))
+                        {
+                            foreach (var directory in Settings.IncludePath)
+                            {
+                                if (File.Exists(Path.Combine(directory, path)))
+                                {
+                                    path = Path.Combine(directory, path);
+                                    break;
+                                }
+                            }
+                            if (!File.Exists(path))
+                            {
+                                AddError(CodeType.Directive, AssemblyError.FileNotFound);
+                                continue;
+                            }
+                        }
+                        else
+                        {
+                            AddError(CodeType.Directive, AssemblyError.InvalidDirective);
+                            continue;
+                        }
+                        string[] includedLines = File.ReadAllText(path).Replace("\r", "").Split('\n');
+                        LineNumbers.Push(0);
+                        FileNames.Push(Path.GetFileName(path));
+                        Lines = Lines.Take(CurrentIndex).Concat(includedLines).Concat(new[] { ".endinclude" }).Concat(Lines.Skip(CurrentIndex + 1)).ToArray();
+                        CurrentIndex--;
+                        continue;
+                    }
+                    else if (directive == "endinclude")
+                    {
+                        FileNames.Pop();
+                        LineNumbers.Pop();
                     }
                     else
                     {

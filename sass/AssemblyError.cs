@@ -10,8 +10,8 @@ namespace sass
         None = 0,
         InvalidInstruction = 1,
         InvalidLabel = 2,
-        FileNotFound,
-        InvalidDirective,
-        DuplicateName,
+        FileNotFound = 3,
+        InvalidDirective = 4,
+        DuplicateName = 5
     }
 }
