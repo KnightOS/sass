@@ -548,21 +548,31 @@ namespace sass
                     }
                     return listing;
                 case "ifdef":
-                    if (parameters.Length != 1)
                     {
-                        listing.Error = AssemblyError.InvalidDirective;
+                        if (parameters.Length != 1)
+                        {
+                            listing.Error = AssemblyError.InvalidDirective;
+                            return listing;
+                        }
+                        var result = ExpressionEngine.Symbols.ContainsKey(parameters[0].ToLower());
+                        if (!result)
+                            result = Macros.Any(m => m.Name.ToLower() == parameters[0].ToLower());
+                        IfStack.Push(result);
                         return listing;
                     }
-                    IfStack.Push(ExpressionEngine.Symbols.ContainsKey(parameters[0].ToLower()));
-                    return listing;
                 case "ifndef":
-                    if (parameters.Length != 1)
                     {
-                        listing.Error = AssemblyError.InvalidDirective;
+                        if (parameters.Length != 1)
+                        {
+                            listing.Error = AssemblyError.InvalidDirective;
+                            return listing;
+                        }
+                        var result = ExpressionEngine.Symbols.ContainsKey(parameters[0].ToLower());
+                        if (!result)
+                            result = Macros.Any(m => m.Name.ToLower() == parameters[0].ToLower());
+                        IfStack.Push(!result);
                         return listing;
                     }
-                    IfStack.Push(!ExpressionEngine.Symbols.ContainsKey(parameters[0].ToLower()));
-                    return listing;
                 case "endif":
                     if (parameters.Length != 0)
                     {
