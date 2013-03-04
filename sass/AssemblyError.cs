@@ -12,6 +12,8 @@ namespace sass
         InvalidLabel = 2,
         FileNotFound = 3,
         InvalidDirective = 4,
-        DuplicateName = 5
+        DuplicateName = 5,
+        InvalidExpression = 6,
+        UnknownSymbol
     }
 }

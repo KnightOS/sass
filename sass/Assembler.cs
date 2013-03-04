@@ -36,6 +36,7 @@ namespace sass
             FileNames = new Stack<string>();
             IncludePaths = new List<string>();
             Macros = new List<Macro>();
+            IfStack = new Stack<bool>();
         }
 
         public AssemblyOutput Assemble(string assembly, string fileName = null)
@@ -48,9 +49,10 @@ namespace sass
             FileNames.Push(fileName);
             LineNumbers.Push(0);
             RootLineNumber = 0;
+            IfStack.Push(true);
             for (CurrentIndex = 0; CurrentIndex < Lines.Length; CurrentIndex++)
             {
-                CurrentLine = Lines[CurrentIndex].Trim().TrimComments().ToLower();
+                CurrentLine = Lines[CurrentIndex].Trim().TrimComments();
                 if (SuspendedLines == 0)
                 {
                     LineNumbers.Push(LineNumbers.Pop() + 1);
@@ -67,6 +69,12 @@ namespace sass
                         Concat(Lines.Skip(CurrentIndex + 1)).ToArray();
                     SuspendedLines = split.Length;
                     CurrentIndex--;
+                    continue;
+                }
+
+                if (!IfStack.Peek())
+                {
+                    // TODO
                     continue;
                 }
 
@@ -133,51 +141,6 @@ namespace sass
                             LineNumber = LineNumbers.Peek(),
                             RootLineNumber = RootLineNumber
                         });
-                    }
-                    else if (directive.StartsWith("include"))
-                    {
-                        if (parameters.Length != 1)
-                        {
-                            AddError(CodeType.Directive, AssemblyError.InvalidDirective);
-                            continue;
-                        }
-                        var path = parameters[0].Trim();
-                        if (path.StartsWith("\"") && path.EndsWith("\""))
-                        {
-                            path = path.Substring(1, path.Length - 2);
-                            if (!File.Exists(path))
-                            {
-                                AddError(CodeType.Directive, AssemblyError.FileNotFound);
-                                continue;
-                            }
-                        }
-                        else if (path.StartsWith("<") && path.EndsWith(">"))
-                        {
-                            foreach (var directory in Settings.IncludePath)
-                            {
-                                if (File.Exists(Path.Combine(directory, path)))
-                                {
-                                    path = Path.Combine(directory, path);
-                                    break;
-                                }
-                            }
-                            if (!File.Exists(path))
-                            {
-                                AddError(CodeType.Directive, AssemblyError.FileNotFound);
-                                continue;
-                            }
-                        }
-                        else
-                        {
-                            AddError(CodeType.Directive, AssemblyError.InvalidDirective);
-                            continue;
-                        }
-                        string[] includedLines = File.ReadAllText(path).Replace("\r", "").Split('\n');
-                        LineNumbers.Push(0);
-                        FileNames.Push(Path.GetFileName(path));
-                        Lines = Lines.Take(CurrentIndex).Concat(includedLines).Concat(new[] { ".endfile" }).Concat(Lines.Skip(CurrentIndex + 1)).ToArray();
-                        CurrentIndex--;
-                        continue;
                     }
                     else
                     {
@@ -405,6 +368,7 @@ namespace sass
                 parameters = parameter.SafeSplit(' ');
                 directive = directive.Remove(directive.SafeIndexOf(' '));
             }
+            directive = directive.ToLower();
             var listing = new Listing
             {
                 Code = line,
@@ -433,13 +397,28 @@ namespace sass
                         var result = new List<byte>();
                         parameters = parameter.SafeSplit(',');
                         foreach (var item in parameters)
-                            result.Add((byte)ExpressionEngine.Evaluate(item, PC++));
+                        {
+                            if (item.StartsWith("\"") && item.EndsWith("\""))
+                            {
+                            }
+                            else
+                                result.Add((byte)ExpressionEngine.Evaluate(item, PC++));
+                        }
                         listing.Output = result.ToArray();
                         return listing;
                     }
                     else
                     {
-                        listing.Output = new byte[parameters.Length];
+                        parameters = parameter.SafeSplit(',');
+                        int length = 0;
+                        foreach (var p in parameters)
+                        {
+                            if (p.StartsWith("\"") && p.EndsWith("\""))
+                                length += p.Substring(1, p.Length - 2).Unescape().Length;
+                            else
+                                length++;
+                        }
+                        listing.Output = new byte[length];
                         listing.PostponeEvalulation = true;
                         PC += (uint)listing.Output.Length;
                         return listing;
@@ -509,7 +488,7 @@ namespace sass
                             listing.Error = AssemblyError.FileNotFound;
                             return listing;
                         }
-                        FileNames.Push(parameter);
+                        FileNames.Push(parameter.Substring(1, parameter.Length - 2));
                         LineNumbers.Push(0);
                         string includedFile = File.ReadAllText(file) + "\n.endfile";
                         string[] lines = includedFile.Replace("\r", "").Split('\n');
@@ -527,6 +506,25 @@ namespace sass
                     // TODO: Equates in a different way
                     ExpressionEngine.Symbols.Add(parameters[0], new Symbol((uint)ExpressionEngine.Evaluate(parameter.Substring(parameter.IndexOf(' ') + 1).Trim(), PC)));
                     return listing;
+                case "if":
+                    if (parameters.Length == 0)
+                    {
+                        listing.Error = AssemblyError.InvalidDirective;
+                        return listing;
+                    }
+                    try
+                    {
+                        IfStack.Push(ExpressionEngine.Evaluate(parameter, PC) != 0);
+                    }
+                    catch (InvalidOperationException)
+                    {
+                        listing.Error = AssemblyError.InvalidExpression;
+                    }
+                    catch (KeyNotFoundException)
+                    {
+                        listing.Error = AssemblyError.UnknownSymbol;
+                    }
+                    return listing;
             }
             return null;
         }
@@ -536,7 +534,7 @@ namespace sass
             file = file.Substring(1, file.Length - 2); // Remove <> or ""
             if (File.Exists(file))
                 return file;
-            foreach (var path in IncludePaths)
+            foreach (var path in Settings.IncludePath)
             {
                 if (File.Exists(Path.Combine(path, file)))
                     return Path.Combine(path, file);

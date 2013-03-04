@@ -1,6 +1,6 @@
 ﻿.org 0x9D95
 .equ test 0x1234
-.db 0x12, 0x34
+.db 0x12, 0x34, "AaBb"
 start:
     add a, b
 #include "test2.asm"
