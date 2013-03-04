@@ -1,5 +1,3 @@
-﻿#define test 0x1234
-#define test2 "Test two"
+﻿#define function(arg1, arg2) ld a, arg1 \ ld b, arg2
 
-ld hl, test
-.db test2
+function(10, 20)

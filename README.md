@@ -150,8 +150,7 @@ Directives are indicated by a '.' or '#' as the first character, as in "#include
 **dw \[value], \[value], ...**: Inserts any number of n-bit *values* into the output, where n is the
   number of bits to a word in the target architecture.
 
-**define \[key] \[value]**: Creates a simple macro with no parameters, whose name is "key" and whose replacement is
-  "value".
+**define \[key] \[value]**: Creates a one-line macro, whose name is "key" and whose replacement text is "value".
 
 **echo \[message], \[message], ...**: Echos any number of *messages* to the console at assembly time. If
   *message* is not a string, it will be treated as an expression and echoed as a number.
@@ -178,6 +177,28 @@ Directives are indicated by a '.' or '#' as the first character, as in "#include
 
 **org \[value]**: Sets the internal program counter to *value*. This does not add to the output, but will affect
   labels defined later on.
+
+**What's the difference between define and equ?** Define creates a macro. These have more overheard and take longer
+to evaluate during assembly, and should be used sparingly. Equ "equates" a name with a value, and creates a symbol,
+which has far less overhead. Use this one if you can. One example of where you need to use define is to define a string
+constant. Here's some example uses of each:
+
+    .define text "Hello, world"
+    .equ otherText "Hello, world" ; Doesn't work
+    .equ value 0x1234 - 28
+    
+    .asciiz text
+    ld hl, value
+    
+    .define function(arg1, arg2) ld a, arg1 \ ld b, arg2
+    
+    function(10, 20) ; Becomes ld a, 10 \ ld b, 20
+    
+    .define add(arg1, arg2) arg1 + arg2
+    
+    ld a, add(10, value) ; Can use symbols in macro invocation
+    
+    .define foo ; Adds a symbol where "foo" equals 1 (special case, doesn't create a macro)
 
 # Compiling from Source
 

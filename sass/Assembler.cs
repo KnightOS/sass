@@ -63,17 +63,6 @@ namespace sass
                 else
                     SuspendedLines--;
 
-                if (CurrentLine.SafeContains('\\'))
-                {
-                    // Split lines up
-                    var split = CurrentLine.SafeSplit('\\');
-                    Lines = Lines.Take(CurrentIndex).Concat(split).
-                        Concat(Lines.Skip(CurrentIndex + 1)).ToArray();
-                    SuspendedLines = split.Length;
-                    CurrentIndex--;
-                    continue;
-                }
-
                 if (!IfStack.Peek())
                 {
                     bool match = false;
@@ -129,7 +118,7 @@ namespace sass
                         var code = macroMatch.Code;
                         int index = 0;
                         foreach (var parameter in macroMatch.Parameters)
-                            code = code.Replace(parameter, parameters[index++]);
+                            code = code.Replace(parameter, parameters[index++].Trim());
                         string newLine;
                         if (parameterDefinition != null)
                             newLine = CurrentLine.Replace(macroMatch.Name + "(" + parameterDefinition + ")", code);
@@ -246,6 +235,16 @@ namespace sass
                 }
                 else
                 {
+                    if (CurrentLine.SafeContains('\\'))
+                    {
+                        // Split lines up
+                        var split = CurrentLine.SafeSplit('\\');
+                        Lines = Lines.Take(CurrentIndex).Concat(split).
+                            Concat(Lines.Skip(CurrentIndex + 1)).ToArray();
+                        SuspendedLines = split.Length;
+                        CurrentIndex--;
+                        continue;
+                    }
                     if (string.IsNullOrEmpty(CurrentLine))
                         continue;
                     // Check instructions
@@ -332,15 +331,26 @@ namespace sass
                     foreach (var value in entry.Instruction.ImmediateValues)
                     {
                         // TODO: Truncation warning
-                        if (value.Value.RelativeToPC)
-                            instruction = instruction.Replace("^" + value.Key, ConvertToBinary(
-                                entry.Address -
-                                (ExpressionEngine.Evaluate(value.Value.Value, entry.Address) + entry.Instruction.Length),
-                                value.Value.Bits));
-                        else
-                            instruction = instruction.Replace("%" + value.Key, ConvertToBinary(
-                                ExpressionEngine.Evaluate(value.Value.Value, entry.Address),
-                                value.Value.Bits));
+                        try
+                        {
+                            if (value.Value.RelativeToPC)
+                                instruction = instruction.Replace("^" + value.Key, ConvertToBinary(
+                                    entry.Address -
+                                    (ExpressionEngine.Evaluate(value.Value.Value, entry.Address) + entry.Instruction.Length),
+                                    value.Value.Bits));
+                            else
+                                instruction = instruction.Replace("%" + value.Key, ConvertToBinary(
+                                    ExpressionEngine.Evaluate(value.Value.Value, entry.Address),
+                                    value.Value.Bits));
+                        }
+                        catch (KeyNotFoundException)
+                        {
+                            entry.Error = AssemblyError.UnknownSymbol;
+                        }
+                        catch (InvalidOperationException)
+                        {
+                            entry.Error = AssemblyError.InvalidExpression;
+                        }
                     }
                     entry.Output = ExpressionEngine.ConvertFromBinary(instruction);
                     finalBinary.AddRange(entry.Output);
@@ -481,7 +491,7 @@ namespace sass
                     return listing;
                 }
                 case "nolist":
-                case "list": // TODO: Do either of these really matter?
+                case "list":
                 case "end":
                     return listing;
                 case "fill":
@@ -542,25 +552,41 @@ namespace sass
                     }
                     return listing;
                 case "define":
-                    // TODO: Macro
-                    // TODO: Equates in a different way
                     if (parameters.Length == 1)
                     {
-                        if (Macros.Any(m => m.Name == parameters[0].ToLower()))
+                        if (ExpressionEngine.Symbols.ContainsKey(parameters[0].ToLower()))
                         {
                             listing.Error = AssemblyError.DuplicateName;
                             return listing;
                         }
-                        Macros.Add(new Macro(parameters[0].ToLower(), new string[0], "1"));
+                        ExpressionEngine.Symbols.Add(parameters[0].ToLower(), new Symbol(1));
                     }
                     else
                     {
-                        if (Macros.Any(m => m.Name == parameters[0].ToLower()))
+                        var macro = new Macro();
+                        if (parameter.Contains("("))
+                        {
+                            var parameterDefinition = parameter.Substring(parameter.SafeIndexOf('(') + 1);
+                            parameterDefinition = parameterDefinition.Remove(parameterDefinition.SafeIndexOf(')'));
+                            // NOTE: This probably introduces the ability to use ".macro foo(bar)this_doesnt_cause_errors"
+                            macro.Parameters = parameterDefinition.SafeSplit(',');
+                            for (int i = 0; i < macro.Parameters.Length; i++)
+                                macro.Parameters[i] = macro.Parameters[i].Trim();
+                            macro.Name = parameter.Remove(parameter.SafeIndexOf('('));
+                            macro.Code = parameter.Substring(parameter.SafeIndexOf(')') + 1);
+                        }
+                        else
+                        {
+                            macro.Name = parameter.Remove(parameter.SafeIndexOf(' ') + 1); // TODO: Consider enforcing character usage restrictions
+                            macro.Code = parameter.Substring(parameter.SafeIndexOf(' ') + 1).Trim();
+                        }
+                        macro.Name = macro.Name.ToLower();
+                        if (Macros.Any(m => m.Name == macro.Name))
                         {
                             listing.Error = AssemblyError.DuplicateName;
                             return listing;
                         }
-                        Macros.Add(new Macro(parameters[0].ToLower(), new string[0], parameter.Substring(parameter.IndexOf(' ') + 1).Trim()));
+                        Macros.Add(macro);
                     }
                     return listing;
                 case "if":
