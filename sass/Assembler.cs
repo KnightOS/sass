@@ -396,13 +396,12 @@ namespace sass
                     {
                         var result = new List<byte>();
                         parameters = parameter.SafeSplit(',');
-                        foreach (var item in parameters)
+                        foreach (var p in parameters)
                         {
-                            if (item.StartsWith("\"") && item.EndsWith("\""))
-                            {
-                            }
+                            if (p.StartsWith("\"") && p.EndsWith("\""))
+                                result.AddRange(Settings.Encoding.GetBytes(p.Substring(1, p.Length - 2).Unescape()));
                             else
-                                result.Add((byte)ExpressionEngine.Evaluate(item, PC++));
+                                result.Add((byte)ExpressionEngine.Evaluate(p, PC++));
                         }
                         listing.Output = result.ToArray();
                         return listing;

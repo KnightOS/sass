@@ -20,6 +20,9 @@ Usage: sass.exe [parameters] [input file] [output file]
 
 You may customize sass's usage at the command line with a number of parameters.
 
+**--encoding \[name]**: Sets the string encoding to use for string literals. Note that .asciiz and related directives
+  will use the specified encoding, not ASCII. The default is "utf-8".
+
 **--help**: Displays information on sass usage and basic documentation. *Aliases: -h -? /? /help -help*
 
 **--include \[path(s)]**: Modifies the include path. This should be a semicolon-delimited list of paths to look
@@ -31,6 +34,9 @@ You may customize sass's usage at the command line with a number of parameters.
   (see [below](#supported-architectures)), or a path to a user-specified instruction set file. *Aliases: --instr*
 
 **--listing \[file]**: Specifies a file to output a listing to. *Aliases: -l*
+
+**--list-encodings**: Lists all available string encodings and their keys for use in --encoding. This will terminate
+  sass without assembling any files.
 
 **--output-file \[file]**: An alternative way to specify the output file. *Aliases: --output*
 

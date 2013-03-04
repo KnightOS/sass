@@ -31,6 +31,17 @@ namespace sass
                     {
                         switch (arg)
                         {
+                            case "--encoding":
+                                try
+                                {
+                                    settings.Encoding = Encoding.GetEncoding(args[++i]);
+                                }
+                                catch
+                                {
+                                    Console.WriteLine("The specified encoding was not recognized. Use sass --list-encodings to see available encodings.");
+                                    return 1;
+                                }
+                                break;
                             case "-h":
                             case "-?":
                             case "/?":
@@ -55,6 +66,12 @@ namespace sass
                             case "--listing":
                                 settings.ListingOutput = args[++i];
                                 break;
+                            case "--list-encodings":
+                                Console.WriteLine("The default encoding is UTF-8. The following are available: ");
+                                foreach (var encoding in Encoding.GetEncodings())
+                                    Console.WriteLine("{0} [{1}]", encoding.DisplayName, encoding.Name);
+                                Console.WriteLine("Use the identifier (in [brackets]) with --encoding).");
+                                return 0;
                             case "--output":
                             case "--output-file":
                                 outputFile = args[++i];

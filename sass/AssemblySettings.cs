@@ -14,11 +14,13 @@ namespace sass
             ListingOutput = null;
             IncludePath = new string[0];
             SymbolOutput = null;
+            Encoding = Encoding.UTF8;
         }
 
         public bool Verbose { get; set; }
         public string ListingOutput { get; set; }
         public string[] IncludePath { get; set; }
         public string SymbolOutput { get; set; }
+        public Encoding Encoding { get; set; }
     }
 }
