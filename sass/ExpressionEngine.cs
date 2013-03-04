@@ -9,6 +9,7 @@ namespace sass
     public class ExpressionEngine
     {
         public Dictionary<string, Symbol> Symbols { get; set; }
+        public List<RelativeLabel> RelativeLabels { get; set; }
         public string LastGlobalLabel { get; set; }
         // Grouped by priority, based on C operator precedence
         public static string[][] Operators = new[]
@@ -28,90 +29,125 @@ namespace sass
         public ExpressionEngine()
         {
             Symbols = new Dictionary<string, Symbol>();
+            RelativeLabels = new List<RelativeLabel>();
         }
 
-        public ulong Evaluate(string expression, uint PC)
+        public ulong Evaluate(string expression, uint PC, int rootLineNumber)
         {
             expression = expression.Trim();
+            // Check for relative labels (special case, because they're bloody annoying to parse)
+            if (expression.EndsWith("_"))
+            {
+                bool relative = true;
+                int offset = 0;
+                for (int i = 0; i < expression.Length - 1; i++)
+                {
+                    if (expression[i] == '-')
+                        offset--;
+                    else if (expression[i] == '+')
+                        offset++;
+                    else
+                    {
+                        relative = false;
+                        break;
+                    }
+                }
+                if (offset < 0)
+                    offset++;
+                if (relative)
+                {
+                    int i;
+                    for (i = 0; i < RelativeLabels.Count; i++)
+                    {
+                        if (RelativeLabels[i].RootLineNumber > rootLineNumber)
+                            break;
+                    }
+                    i--;
+                    i += offset;
+                    if (i < 0 || i >= RelativeLabels.Count)
+                        throw new KeyNotFoundException("Relative label not found.");
+                    return RelativeLabels[i].Address;
+                }
+            }
             // Check for parenthesis
             if (HasOperators(expression))
             {
                 // Recurse
                 var parts = SplitExpression(expression);
                 if (parts[0] == "" && parts[1] == "-") // Negate
-                    return (ulong)-(long)Evaluate(parts[2], PC);
+                    return (ulong)-(long)Evaluate(parts[2], PC, rootLineNumber);
                 if (parts[0] == "" && parts[1] == "~") // NOT
-                    return ~Evaluate(parts[2], PC);
+                    return ~Evaluate(parts[2], PC, rootLineNumber);
                 switch (parts[1]) // Evaluate
                 {
                     case "*":
-                        return Evaluate(parts[0], PC)
+                        return Evaluate(parts[0], PC, rootLineNumber)
                                *
-                               Evaluate(parts[2], PC);
+                               Evaluate(parts[2], PC, rootLineNumber);
                     case "/":
-                        return Evaluate(parts[0], PC)
+                        return Evaluate(parts[0], PC, rootLineNumber)
                                /
-                               Evaluate(parts[2], PC);
+                               Evaluate(parts[2], PC, rootLineNumber);
                     case "%":
-                        return Evaluate(parts[0], PC)
+                        return Evaluate(parts[0], PC, rootLineNumber)
                                %
-                               Evaluate(parts[2], PC);
+                               Evaluate(parts[2], PC, rootLineNumber);
                     case "+":
-                        return Evaluate(parts[0], PC)
+                        return Evaluate(parts[0], PC, rootLineNumber)
                                +
-                               Evaluate(parts[2], PC);
+                               Evaluate(parts[2], PC, rootLineNumber);
                     case "<<":
-                        return Evaluate(parts[0], PC)
+                        return Evaluate(parts[0], PC, rootLineNumber)
                                <<
-                               (int)Evaluate(parts[2], PC);
+                               (int)Evaluate(parts[2], PC, rootLineNumber);
                     case ">>":
-                        return Evaluate(parts[0], PC)
+                        return Evaluate(parts[0], PC, rootLineNumber)
                                >>
-                               (int)Evaluate(parts[2], PC);
+                               (int)Evaluate(parts[2], PC, rootLineNumber);
                     case "<":
-                        return Evaluate(parts[0], PC)
+                        return Evaluate(parts[0], PC, rootLineNumber)
                                <
-                               Evaluate(parts[2], PC) ? 1UL : 0UL;
+                               Evaluate(parts[2], PC, rootLineNumber) ? 1UL : 0UL;
                     case "<=":
-                        return Evaluate(parts[0], PC)
+                        return Evaluate(parts[0], PC, rootLineNumber)
                                <=
-                               Evaluate(parts[2], PC) ? 1UL : 0UL;
+                               Evaluate(parts[2], PC, rootLineNumber) ? 1UL : 0UL;
                     case ">":
-                        return Evaluate(parts[0], PC)
+                        return Evaluate(parts[0], PC, rootLineNumber)
                                >
-                               Evaluate(parts[2], PC) ? 1UL : 0UL;
+                               Evaluate(parts[2], PC, rootLineNumber) ? 1UL : 0UL;
                     case ">=":
-                        return Evaluate(parts[0], PC)
+                        return Evaluate(parts[0], PC, rootLineNumber)
                                >=
-                               Evaluate(parts[2], PC) ? 1UL : 0UL;
+                               Evaluate(parts[2], PC, rootLineNumber) ? 1UL : 0UL;
                     case "==":
-                        return Evaluate(parts[0], PC)
+                        return Evaluate(parts[0], PC, rootLineNumber)
                                ==
-                               Evaluate(parts[2], PC) ? 1UL : 0UL;
+                               Evaluate(parts[2], PC, rootLineNumber) ? 1UL : 0UL;
                     case "!=":
-                        return Evaluate(parts[0], PC)
+                        return Evaluate(parts[0], PC, rootLineNumber)
                                !=
-                               Evaluate(parts[2], PC) ? 1UL : 0UL;
+                               Evaluate(parts[2], PC, rootLineNumber) ? 1UL : 0UL;
                     case "&":
-                        return Evaluate(parts[0], PC)
+                        return Evaluate(parts[0], PC, rootLineNumber)
                                &
-                               Evaluate(parts[2], PC);
+                               Evaluate(parts[2], PC, rootLineNumber);
                     case "^":
-                        return Evaluate(parts[0], PC)
+                        return Evaluate(parts[0], PC, rootLineNumber)
                                ^
-                               Evaluate(parts[2], PC);
+                               Evaluate(parts[2], PC, rootLineNumber);
                     case "|":
-                        return Evaluate(parts[0], PC)
+                        return Evaluate(parts[0], PC, rootLineNumber)
                                |
-                               Evaluate(parts[2], PC);
+                               Evaluate(parts[2], PC, rootLineNumber);
                     case "&&":
-                        return (Evaluate(parts[0], PC) == 1
+                        return (Evaluate(parts[0], PC, rootLineNumber) == 1
                                &&
-                               Evaluate(parts[2], PC) == 1) ? 1UL : 0UL;
+                               Evaluate(parts[2], PC, rootLineNumber) == 1) ? 1UL : 0UL;
                     case "||":
-                        return (Evaluate(parts[0], PC) == 1
+                        return (Evaluate(parts[0], PC, rootLineNumber) == 1
                                ||
-                               Evaluate(parts[2], PC) == 1) ? 1UL : 0UL;
+                               Evaluate(parts[2], PC, rootLineNumber) == 1) ? 1UL : 0UL;
                 }
             }
             else

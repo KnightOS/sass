@@ -155,38 +155,41 @@ namespace sass
                     else
                         label = CurrentLine.Remove(CurrentLine.Length - 1).Trim();
                     label = label.ToLower();
-                    bool local = label.StartsWith(".");
-                    if (local)
-                        label = label.Substring(1) + "@" + ExpressionEngine.LastGlobalLabel;
-                    bool valid = true;
-                    for (int k = 0; k < label.Length; k++) // Validate label
+                    if (label == "_")
                     {
-                        if (!char.IsLetterOrDigit(label[k]) && k != '_')
-                        {
-                            if (local && label[k] == '@')
-                                continue;
-                            valid = false;
-                            break;
-                        }
+                        // Relative
+                        ExpressionEngine.RelativeLabels.Add(new RelativeLabel
+                            {
+                                Address = PC,
+                                RootLineNumber = RootLineNumber
+                            });
+                        AddOutput(CodeType.Label);
                     }
-                    if (!valid)
-                        AddError(CodeType.Label, AssemblyError.InvalidLabel);
                     else
                     {
-                        Output.Listing.Add(new Listing
+                        bool local = label.StartsWith(".");
+                        if (local)
+                            label = label.Substring(1) + "@" + ExpressionEngine.LastGlobalLabel;
+                        bool valid = true;
+                        for (int k = 0; k < label.Length; k++) // Validate label
                         {
-                            Code = CurrentLine,
-                            CodeType = CodeType.Label,
-                            Error = AssemblyError.None,
-                            Warning = AssemblyWarning.None,
-                            Address = PC,
-                            FileName = FileNames.Peek(),
-                            LineNumber = LineNumbers.Peek(),
-                            RootLineNumber = RootLineNumber
-                        });
-                        ExpressionEngine.Symbols.Add(label.ToLower(), new Symbol(PC, true));
-                        if (!local)
-                            ExpressionEngine.LastGlobalLabel = label.ToLower();
+                            if (!char.IsLetterOrDigit(label[k]) && label[k] != '_')
+                            {
+                                if (local && label[k] == '@')
+                                    continue;
+                                valid = false;
+                                break;
+                            }
+                        }
+                        if (!valid)
+                            AddError(CodeType.Label, AssemblyError.InvalidLabel);
+                        else
+                        {
+                            AddOutput(CodeType.Label);
+                            ExpressionEngine.Symbols.Add(label.ToLower(), new Symbol(PC, true));
+                            if (!local)
+                                ExpressionEngine.LastGlobalLabel = label.ToLower();
+                        }
                     }
                 }
                 else if (CurrentLine.StartsWith(".") || CurrentLine.StartsWith("#")) // Directive
@@ -326,7 +329,7 @@ namespace sass
 
         private AssemblyOutput Finish(AssemblyOutput output)
         {
-            List<byte> finalBinary = new List<byte>();
+            var finalBinary = new List<byte>();
             ExpressionEngine.LastGlobalLabel = null;
             for (int i = 0; i < output.Listing.Count; i++)
             {
@@ -364,11 +367,11 @@ namespace sass
                             if (value.Value.RelativeToPC)
                                 instruction = instruction.Replace("^" + value.Key, ConvertToBinary(
                                     entry.Address -
-                                    (ExpressionEngine.Evaluate(value.Value.Value, entry.Address) + entry.Instruction.Length),
+                                    (ExpressionEngine.Evaluate(value.Value.Value, entry.Address, entry.RootLineNumber) + entry.Instruction.Length),
                                     value.Value.Bits, out truncated));
                             else
                                 instruction = instruction.Replace("%" + value.Key, ConvertToBinary(
-                                    ExpressionEngine.Evaluate(value.Value.Value, entry.Address),
+                                    ExpressionEngine.Evaluate(value.Value.Value, entry.Address, entry.RootLineNumber),
                                     value.Value.Bits, out truncated));
                             if (truncated)
                                 entry.Warning = AssemblyWarning.ValueTruncated;
@@ -410,7 +413,7 @@ namespace sass
                     result = "0" + result;
                 mask <<= 1;
             }
-            truncated = value > truncationMask;
+            truncated = (long)value > (long)truncationMask;
             // Convert to little endian
             string little = "";
             for (int i = 0; i < result.Length; i += 8)
@@ -447,7 +450,7 @@ namespace sass
             {
                 case "block":
                 {
-                    ulong amount = ExpressionEngine.Evaluate(parameter, PC);
+                    ulong amount = ExpressionEngine.Evaluate(parameter, PC, RootLineNumber);
                     listing.Output = new byte[amount];
                     PC += (uint)amount;
                     return listing;
@@ -467,7 +470,7 @@ namespace sass
                             {
                                 try
                                 {
-                                    result.Add((byte)ExpressionEngine.Evaluate(p, PC++));
+                                    result.Add((byte)ExpressionEngine.Evaluate(p, PC++, RootLineNumber));
                                 }
                                 catch (KeyNotFoundException)
                                 {
@@ -503,7 +506,7 @@ namespace sass
                         var result = new List<byte>();
                         parameters = parameter.SafeSplit(',');
                         foreach (var item in parameters)
-                            result.AddRange(TruncateWord(ExpressionEngine.Evaluate(item, PC++)));
+                            result.AddRange(TruncateWord(ExpressionEngine.Evaluate(item, PC++, RootLineNumber)));
                         listing.Output = result.ToArray();
                         return listing;
                     }
@@ -524,7 +527,7 @@ namespace sass
                         if (item.Trim().StartsWith("\"") && item.EndsWith("\""))
                             output += item.Substring(1, item.Length - 2);
                         else
-                            output += ExpressionEngine.Evaluate(item, PC);
+                            output += ExpressionEngine.Evaluate(item, PC, RootLineNumber);
                     }
                     Console.WriteLine((directive == "error" ? "User Error: " : "") + output);
                     return listing;
@@ -533,7 +536,7 @@ namespace sass
                     return listing;
                 case "fill":
                 {
-                    ulong amount = ExpressionEngine.Evaluate(parameters[0], PC);
+                    ulong amount = ExpressionEngine.Evaluate(parameters[0], PC, RootLineNumber);
                     if (parameters.Length == 1)
                     {
                         Array.Resize<string>(ref parameters, 2);
@@ -541,11 +544,11 @@ namespace sass
                     }
                     listing.Output = new byte[amount];
                     for (int i = 0; i < (int)amount; i++)
-                        listing.Output[i] = (byte)ExpressionEngine.Evaluate(parameters[1], PC++);
+                        listing.Output[i] = (byte)ExpressionEngine.Evaluate(parameters[1], PC++, RootLineNumber);
                     return listing;
                 }
                 case "org":
-                    PC = (uint)ExpressionEngine.Evaluate(parameter, PC);
+                    PC = (uint)ExpressionEngine.Evaluate(parameter, PC, RootLineNumber);
                     return listing;
                 case "include":
                     {
@@ -585,7 +588,7 @@ namespace sass
                             return listing;
                         }
                         ExpressionEngine.Symbols.Add(parameters[0].ToLower(), new Symbol(
-                            (uint)ExpressionEngine.Evaluate(parameter.Substring(parameter.IndexOf(' ') + 1).Trim(), PC)));
+                            (uint)ExpressionEngine.Evaluate(parameter.Substring(parameter.IndexOf(' ') + 1).Trim(), PC, RootLineNumber)));
                     }
                     return listing;
                 case "define":
@@ -634,7 +637,7 @@ namespace sass
                     }
                     try
                     {
-                        IfStack.Push(ExpressionEngine.Evaluate(parameter, PC) != 0);
+                        IfStack.Push(ExpressionEngine.Evaluate(parameter, PC, RootLineNumber) != 0);
                     }
                     catch (InvalidOperationException)
                     {
