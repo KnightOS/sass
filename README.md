@@ -169,7 +169,7 @@ Directives are indicated by a '.' or '#' as the first character, as in "#include
 **if \[expression]**: If "expression" evalutates to zero, all the code until the matching endif directive will be
   omitted from the output.
 
-**ifdef \[symbo]**: If "symbol" is not defined as a symbol or macro, all the code until the matching endif directive
+**ifdef \[symbol]**: If "symbol" is not defined as a symbol or macro, all the code until the matching endif directive
   will be omitted from the output.
 
 **include \[path]**: Inserts the specified file's contents into the assembly. \[path] may be `"localfile"` or
