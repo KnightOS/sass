@@ -25,6 +25,7 @@ namespace sass
         private int SuspendedLines { get; set; }
         private int CurrentIndex { get; set; }
         private string CurrentLine { get; set; }
+        private bool Listing { get; set; }
 
         public Assembler(InstructionSet instructionSet, AssemblySettings settings)
         {
@@ -37,6 +38,7 @@ namespace sass
             IncludePaths = new List<string>();
             Macros = new List<Macro>();
             IfStack = new Stack<bool>();
+            Listing = true;
         }
 
         readonly string[] closingIfDirectives = new[] { "endif", "else", "elif", "elseif" };
@@ -73,6 +75,18 @@ namespace sass
                     }
                     if (!match)
                         continue;
+                }
+                if (!Listing)
+                {
+                    if (CurrentLine.StartsWith("#") || CurrentLine.StartsWith("."))
+                    {
+                        if (CurrentLine.Substring(1).ToLower() == "list")
+                        {
+                            AddOutput(CodeType.Directive);
+                            Listing = true;
+                        }
+                    }
+                    continue;
                 }
 
                 if (CurrentLine.SafeContains(".equ") && !CurrentLine.StartsWith(".equ"))
@@ -490,8 +504,6 @@ namespace sass
                     Console.WriteLine((directive == "error" ? "User Error: " : "") + output);
                     return listing;
                 }
-                case "nolist":
-                case "list":
                 case "end":
                     return listing;
                 case "fill":
@@ -664,7 +676,7 @@ namespace sass
                 //        return listing;
                 //    }
                 //    return listing;
-                case ".ascii":
+                case "ascii":
                     if (parameters.Length == 0)
                     {
                         listing.Error = AssemblyError.InvalidDirective;
@@ -678,7 +690,7 @@ namespace sass
                     parameter = parameter.Substring(1, parameter.Length - 2);
                     listing.Output = Settings.Encoding.GetBytes(parameter.Unescape());
                     return listing;
-                case ".asciiz":
+                case "asciiz":
                     if (parameters.Length == 0)
                     {
                         listing.Error = AssemblyError.InvalidDirective;
@@ -692,7 +704,7 @@ namespace sass
                     parameter = parameter.Substring(1, parameter.Length - 2);
                     listing.Output = Settings.Encoding.GetBytes(parameter.Unescape()).Concat(new byte[] { 0 }).ToArray();
                     return listing;
-                case ".asciip":
+                case "asciip":
                     if (parameters.Length == 0)
                     {
                         listing.Error = AssemblyError.InvalidDirective;
@@ -706,6 +718,9 @@ namespace sass
                     parameter = parameter.Substring(1, parameter.Length - 2);
                     listing.Output = Settings.Encoding.GetBytes(parameter.Unescape());
                     listing.Output = new byte[] { (byte)parameter.Length }.Concat(listing.Output).ToArray();
+                    return listing;
+                case "nolist":
+                    Listing = false;
                     return listing;
             }
             return null;

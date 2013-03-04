@@ -1,3 +1,5 @@
-﻿#define function(arg1, arg2) ld a, arg1 \ ld b, arg2
-
-function(10, 20)
+﻿ld a, 10
+.nolist
+ld hl, 0x1234
+.list
+add a, 10
