@@ -175,6 +175,10 @@ Directives are indicated by a '.' or '#' as the first character, as in "#include
   `<includedfile>`, where the former expects the file to be in the current working directory, and the latter
   looks for any files within the include path specified at the command line.
 
+**list**: Resumes listing.
+
+**nolist**: Stops listing. This stops the assembler from evaluating any code until the corresponding list directive.
+
 **org \[value]**: Sets the internal program counter to *value*. This does not add to the output, but will affect
   labels defined later on.
 
