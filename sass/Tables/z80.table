@@ -143,11 +143,11 @@ INS LDI                                 11101101 10100000
 
 INS LDIR                                11101101 10110000
 
-POP_@A<g7>                              11@A0001
-POP_@A<g8>                              @A 11100001
+INS POP_@A<g7>                          11@A0001
+INS POP_@A<g8>                          @A 11100001
 
-PUSH_@A<g7>                             11@A0101
-PUSH_@A<g8>                             @A 11100101
+INS PUSH_@A<g7>                         11@A0101
+INS PUSH_@A<g8>                         @A 11100101
 
 #### ARITHMETIC
 
@@ -336,58 +336,58 @@ INS SRL_(-@A<g3>-+-%B<8>-)              @A 11001011 %B 00111110
 INS CALL_%A<16>                         11001101 %A
 INS CALL_@A<g2>-,-%B<16>                11@A100 %B
 
-DJNZ_^A<8>                              00010000 ^A
+INS DJNZ_^A<8>                          00010000 ^A
 
-JP_%A<16>                               11000011 %A
-JP_@A<g2>-,-%B<16>                      11@A010 %B
+INS JP_%A<16>                           11000011 %A
+INS JP_@A<g2>-,-%B<16>                  11@A010 %B
 
-JR_^A<8>                                00011000 ^A
-JR_@A<g1>-,-^B<8>                       001@A000 ^B
+INS JR_^A<8>                            00011000 ^A
+INS JR_@A<g1>-,-^B<8>                   001@A000 ^B
 
-NOP                                     00000000
+INS NOP                                 00000000
 
-RET                                     11001001
-RET_@A<g2>                              11@A000
+INS RET                                 11001001
+INS RET_@A<g2>                          11@A000
 
-RETI                                    11101101 01001101
+INS RETI                                11101101 01001101
 
-RETN                                    11101101 01000101
+INS RETN                                11101101 01000101
 
-RST_&A                                  11&A111
+INS RST_&A                              11&A111
 
 #### HARDWARE
 
-INS DI                     11110011
+INS DI                                  11110011
 
-INS EI                     11111011
+INS EI                                  11111011
 
-INS HALT                   01110110
+INS HALT                                01110110
 
-INS IM_0                   11101101 01010110
-INS IM_1                   11101101 01010110
-INS IM_2                   11101101 01011110
+INS IM_0                                11101101 01010110
+INS IM_1                                11101101 01010110
+INS IM_2                                11101101 01011110
 
-INS IN_A-,-(-%A<8>-)       11011011 %A
-INS IN_@A<g3>-,-C          11101011 01@A000
+INS IN_A-,-(-%A<8>-)                    11011011 %A
+INS IN_@A<g3>-,-C                       11101011 01@A000
 
-INS IND                    11101101 10101010
+INS IND                                 11101101 10101010
 
-INS INDR                   11101101 10111010
+INS INDR                                11101101 10111010
 
-INS INI                    11101101 10100010
+INS INI                                 11101101 10100010
 
-INS INIR                   11101101 10110010
+INS INIR                                11101101 10110010
 
-INS OTDR                   11101101 10111011
+INS OTDR                                11101101 10111011
 
-INS OTIR                   11101101 10110011
+INS OTIR                                11101101 10110011
 
-INS OUT_(-%A<8>-)-,-A      11010011 %A
-INS OUT_(-C-)-,-@A<g3>     11101011 01@A001
+INS OUT_(-%A<8>-)-,-A                   11010011 %A
+INS OUT_(-C-)-,-@A<g3>                  11101011 01@A001
 
-INS OUTD                   11101101 10101011
+INS OUTD                                11101101 10101011
 
-INS OUTI                   11101101 10100011
+INS OUTI                                11101101 10100011
 
 #### UNDOCUMENTED
 

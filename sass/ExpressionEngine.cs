@@ -141,8 +141,11 @@ namespace sass
                     else
                     {
                         // Look up reference
-                        if (Symbols.ContainsKey(expression.ToLower()))
-                            return Symbols[expression.ToLower()].Value;
+                        var symbol = expression.ToLower();
+                        if (symbol.StartsWith("."))
+                            symbol = symbol.Substring(1) + "@" + LastGlobalLabel;
+                        if (Symbols.ContainsKey(symbol))
+                            return Symbols[symbol].Value;
                         throw new KeyNotFoundException("The given equate was not found.");
                     }
                 }

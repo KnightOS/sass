@@ -19,6 +19,11 @@ namespace sass
             Operands = new Dictionary<char, Operand>();
         }
 
+        public override string ToString()
+        {
+            return Match.Replace("_", " ").Replace("-", "");
+        }
+
         internal string Match { get; set; }
         public string Value { get; set; }
         // key, bits

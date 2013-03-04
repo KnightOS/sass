@@ -382,8 +382,13 @@ namespace sass
                             entry.Error = AssemblyError.InvalidExpression;
                         }
                     }
-                    entry.Output = ExpressionEngine.ConvertFromBinary(instruction);
-                    finalBinary.AddRange(entry.Output);
+                    if (entry.Error == AssemblyError.None)
+                    {
+                        entry.Output = ExpressionEngine.ConvertFromBinary(instruction);
+                        finalBinary.AddRange(entry.Output);
+                    }
+                    else
+                        finalBinary.AddRange(new byte[entry.Instruction.Length]);
                 }
             }
             output.Data = finalBinary.ToArray();

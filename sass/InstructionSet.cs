@@ -47,6 +47,10 @@ namespace sass
                 }
                 else if (line.StartsWith("WORDSIZE "))
                     table.WordSize = int.Parse(line.Substring(9));
+                else
+                {
+                    throw new FormatException("In the instruction set, \"" + line + "\" is not valid.");
+                }
             }
             return table;
         }

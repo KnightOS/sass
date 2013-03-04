@@ -140,12 +140,15 @@ namespace sass
                          where l.Warning != AssemblyWarning.None || l.Error != AssemblyError.None
                          orderby l.RootLineNumber
                          select l;
-            foreach (var listing in errors)
+            if (!settings.Verbose)
             {
-                if (listing.Error != AssemblyError.None)
-                    Console.WriteLine(listing.FileName + ":" + listing.LineNumber + " Error: " + listing.Error);
-                if (listing.Warning != AssemblyWarning.None)
-                    Console.WriteLine(listing.FileName + ":" + listing.LineNumber + " Warning: " + listing.Warning);
+                foreach (var listing in errors)
+                {
+                    if (listing.Error != AssemblyError.None)
+                        Console.WriteLine(listing.FileName + ":" + listing.LineNumber + " Error: " + listing.Error);
+                    if (listing.Warning != AssemblyWarning.None)
+                        Console.WriteLine(listing.FileName + ":" + listing.LineNumber + " Warning: " + listing.Warning);
+                }
             }
 
             if (settings.Verbose || settings.ListingOutput != null)
