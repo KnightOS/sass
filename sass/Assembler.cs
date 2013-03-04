@@ -640,6 +640,49 @@ namespace sass
                 //        return listing;
                 //    }
                 //    return listing;
+                case ".ascii":
+                    if (parameters.Length == 0)
+                    {
+                        listing.Error = AssemblyError.InvalidDirective;
+                        return listing;
+                    }
+                    if (!(parameter.StartsWith("\"") && parameter.EndsWith("\"")))
+                    {
+                        listing.Error = AssemblyError.InvalidDirective;
+                        return listing;
+                    }
+                    parameter = parameter.Substring(1, parameter.Length - 2);
+                    listing.Output = Settings.Encoding.GetBytes(parameter.Unescape());
+                    return listing;
+                case ".asciiz":
+                    if (parameters.Length == 0)
+                    {
+                        listing.Error = AssemblyError.InvalidDirective;
+                        return listing;
+                    }
+                    if (!(parameter.StartsWith("\"") && parameter.EndsWith("\"")))
+                    {
+                        listing.Error = AssemblyError.InvalidDirective;
+                        return listing;
+                    }
+                    parameter = parameter.Substring(1, parameter.Length - 2);
+                    listing.Output = Settings.Encoding.GetBytes(parameter.Unescape()).Concat(new byte[] { 0 }).ToArray();
+                    return listing;
+                case ".asciip":
+                    if (parameters.Length == 0)
+                    {
+                        listing.Error = AssemblyError.InvalidDirective;
+                        return listing;
+                    }
+                    if (!(parameter.StartsWith("\"") && parameter.EndsWith("\"")))
+                    {
+                        listing.Error = AssemblyError.InvalidDirective;
+                        return listing;
+                    }
+                    parameter = parameter.Substring(1, parameter.Length - 2);
+                    listing.Output = Settings.Encoding.GetBytes(parameter.Unescape());
+                    listing.Output = new byte[] { (byte)parameter.Length }.Concat(listing.Output).ToArray();
+                    return listing;
             }
             return null;
         }
