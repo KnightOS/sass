@@ -497,8 +497,6 @@ namespace sass
                         listing.Output[i] = (byte)ExpressionEngine.Evaluate(parameters[1], PC++);
                     return listing;
                 }
-                case "option": // TODO: Spasm-style bitmap imports
-                    return listing;
                 case "org":
                     PC = (uint)ExpressionEngine.Evaluate(parameter, PC);
                     return listing;
@@ -517,7 +515,7 @@ namespace sass
                         Lines = Lines.Take(CurrentIndex + 1).Concat(lines).Concat(Lines.Skip(CurrentIndex + 1)).ToArray();
                         return listing;
                     }
-                case "endfile": // Special directive
+                case "endfile": // Special, undocumented directive
                     RootLineNumber--;
                     LineNumbers.Pop();
                     FileNames.Pop();

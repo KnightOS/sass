@@ -135,6 +135,14 @@ This is a simple substitution macro. When called (like `example(a, b)`), 'foo' a
 
 Directives are indicated by a '.' or '#' as the first character, as in "#include \<foo.h>".
 
+**ascii "\[text]"**: Converts "text" to the global string encoding (**not** ASCII) and inserts it into the output.
+
+**asciiz "\[text]"**: Converts "text" to the global string encoding (**not** ASCII) and inserts it into the output,
+  postfixed with a zero.
+
+**asciip "\[text]"**: Converts "text" to the global string encoding (**not** ASCII) and inserts it into the output,
+  prefixed with its 8-bit length.
+
 **block \[size]**: Sets aside *size* bytes, all set to 0. See **fill** if you require a value other than 0.
 
 **db \[value], \[value], ...**: Inserts any number of 8-bit *values* into the output.
@@ -142,10 +150,27 @@ Directives are indicated by a '.' or '#' as the first character, as in "#include
 **dw \[value], \[value], ...**: Inserts any number of n-bit *values* into the output, where n is the
   number of bits to a word in the target architecture.
 
+**define \[key] \[value]**: Creates a simple macro with no parameters, whose name is "key" and whose replacement is
+  "value".
+
 **echo \[message], \[message], ...**: Echos any number of *messages* to the console at assembly time. If
   *message* is not a string, it will be treated as an expression and echoed as a number.
 
+**else**: If the matching if, ifdef, or ifndef directive evalulates to false, the code between this and the matching
+  endif directive will be inserted instead.
+
+**endif**: Closes a corresponding if, ifdef, or ifndef directive.
+
+**equ \[key] \[value]**: Creates a symbol whose name is "key", with "value" as the value. "value" must be a valid
+  expression.
+
 **fill \[size], (value)**: Inserts *size* number of *values* into the output. Default *value* is 0.
+
+**if \[expression]**: If "expression" evalutates to zero, all the code until the matching endif directive will be
+  omitted from the output.
+
+**ifdef \[symbo]**: If "symbol" is not defined as a symbol or macro, all the code until the matching endif directive
+  will be omitted from the output.
 
 **include \[path]**: Inserts the specified file's contents into the assembly. \[path] may be `"localfile"` or
   `<includedfile>`, where the former expects the file to be in the current working directory, and the latter
