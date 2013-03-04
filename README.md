@@ -99,7 +99,18 @@ Boolean operators will assemble to "1" if true, or "0" if false.
 
 ### Local Labels
 
-**TODO**
+sass allows you to define local labels, which allows you to reuse common label names, such as "loop". You may
+preface any label name with "." to declare it as local, and it will be local within the prior global label.
+Example:
+
+    global1:
+        ld a, b
+    .local:
+        call .local
+    global2:
+        ld b, a
+    .local:
+        call .local ; Does not cause a Duplicate Name error
 
 ### Macros
 
