@@ -9,6 +9,7 @@ namespace sass
     {
         internal Macro()
         {
+            Parameters = new string[0];
         }
 
         public Macro(string name, string[] parameters, string code)
@@ -21,5 +22,6 @@ namespace sass
         public string Name { get; set; }
         public string[] Parameters { get; set; }
         public string Code { get; set; }
+        public bool AddEntry { get; set; }
     }
 }

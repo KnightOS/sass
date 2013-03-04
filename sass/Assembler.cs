@@ -93,6 +93,57 @@ namespace sass
                     CurrentLine = ".equ " + name.Trim() + ", " + definition.Trim();
                 }
 
+                // Check for macro
+                {
+                    Macro macroMatch = null;
+                    string[] parameters = null;
+                    string parameterDefinition = null;
+                    foreach (var macro in Macros)
+                    {
+                        if (CurrentLine.SafeContains(macro.Name))
+                        {
+                            // Try to match
+                            int startIndex = CurrentLine.SafeIndexOf(macro.Name);
+                            int endIndex = startIndex + macro.Name.Length - 1;
+                            if (macro.Parameters.Length != 0)
+                            {
+                                if (CurrentLine.Length < endIndex + 1 || CurrentLine[endIndex + 1] != '(')
+                                    continue;
+                                if (macroMatch != null && macro.Name.Length < macroMatch.Name.Length)
+                                    continue;
+                                parameterDefinition = CurrentLine.Substring(endIndex + 2, CurrentLine.SafeIndexOf(')') - (endIndex + 2));
+                                parameters = parameterDefinition.SafeSplit(',');
+                                if (parameters.Length != macro.Parameters.Length)
+                                    continue;
+                                // Matched
+                                macroMatch = macro;
+                            }
+                            else
+                                macroMatch = macro;
+                        }
+                    }
+                    if (macroMatch != null)
+                    {
+                        // Add an entry to the listing
+                        AddOutput(CodeType.Directive);
+                        var code = macroMatch.Code;
+                        int index = 0;
+                        foreach (var parameter in macroMatch.Parameters)
+                            code = code.Replace(parameter, parameters[index++]);
+                        string newLine;
+                        if (parameterDefinition != null)
+                            newLine = CurrentLine.Replace(macroMatch.Name + "(" + parameterDefinition + ")", code);
+                        else
+                            newLine = CurrentLine.Replace(macroMatch.Name, code);
+                        var newLines = newLine.Replace("\r\n", "\n").Split('\n');
+                        SuspendedLines += newLines.Length;
+                        // Insert macro
+                        Lines = Lines.Take(CurrentIndex).Concat(newLines).Concat(Lines.Skip(CurrentIndex + 1)).ToArray();
+                        CurrentIndex--;
+                        continue;
+                    }
+                }
+
                 if (CurrentLine.StartsWith(".") || CurrentLine.StartsWith("#")) // Directive
                 {
                     // Some directives need to be handled higher up
@@ -195,51 +246,6 @@ namespace sass
                 }
                 else
                 {
-                    // Check for macro
-                    Macro macroMatch = null;
-                    string[] parameters = null;
-                    string parameterDefinition = null;
-                    foreach (var macro in Macros)
-                    {
-                        if (CurrentLine.SafeContains(macro.Name))
-                        {
-                            // Try to match
-                            int startIndex = CurrentLine.SafeIndexOf(macro.Name);
-                            int endIndex = startIndex + macro.Name.Length - 1;
-                            if (macro.Parameters.Length != 0)
-                            {
-                                if (CurrentLine[endIndex + 1] != '(')
-                                    continue;
-                                parameterDefinition = CurrentLine.Substring(endIndex + 2, CurrentLine.SafeIndexOf(')') - (endIndex + 2));
-                                parameters = parameterDefinition.SafeSplit(',');
-                                if (parameters.Length != macro.Parameters.Length)
-                                    continue;
-                                // Matched
-                                macroMatch = macro;
-                                break;
-                            }
-                        }
-                    }
-                    if (macroMatch != null)
-                    {
-                        // Add an entry to the listing
-                        AddOutput(CodeType.Directive);
-                        var code = macroMatch.Code;
-                        int index = 0;
-                        foreach (var parameter in macroMatch.Parameters)
-                            code = code.Replace(parameter, parameters[index++]);
-                        string newLine;
-                        if (parameterDefinition != null)
-                            newLine = CurrentLine.Replace(macroMatch.Name + "(" + parameterDefinition + ")", code);
-                        else
-                            newLine = CurrentLine.Replace(macroMatch.Name, code);
-                        var newLines = newLine.Replace("\r\n", "\n").Split('\n');
-                        SuspendedLines += newLines.Length;
-                        // Insert macro
-                        Lines = Lines.Take(CurrentIndex).Concat(newLines).Concat(Lines.Skip(CurrentIndex + 1)).ToArray();
-                        CurrentIndex--;
-                        continue;
-                    }
                     if (string.IsNullOrEmpty(CurrentLine))
                         continue;
                     // Check instructions
@@ -517,15 +523,46 @@ namespace sass
                     FileNames.Pop();
                     return null;
                 case "equ":
+                    if (parameters.Length == 1)
+                    {
+                        if (ExpressionEngine.Symbols.ContainsKey(parameters[0].ToLower()))
+                        {
+                            listing.Error = AssemblyError.DuplicateName;
+                            return listing;
+                        }
+                        ExpressionEngine.Symbols.Add(parameters[0].ToLower(), new Symbol(1));
+                    }
+                    else
+                    {
+                        if (ExpressionEngine.Symbols.ContainsKey(parameters[0].ToLower()))
+                        {
+                            listing.Error = AssemblyError.DuplicateName;
+                            return listing;
+                        }
+                        ExpressionEngine.Symbols.Add(parameters[0].ToLower(), new Symbol(
+                            (uint)ExpressionEngine.Evaluate(parameter.Substring(parameter.IndexOf(' ') + 1).Trim(), PC)));
+                    }
+                    return listing;
                 case "define":
                     // TODO: Macro
                     // TODO: Equates in a different way
                     if (parameters.Length == 1)
-                        ExpressionEngine.Symbols.Add(parameters[0].ToLower(), new Symbol(1));
+                    {
+                        if (Macros.Any(m => m.Name == parameters[0].ToLower()))
+                        {
+                            listing.Error = AssemblyError.DuplicateName;
+                            return listing;
+                        }
+                        Macros.Add(new Macro(parameters[0].ToLower(), new string[0], "1"));
+                    }
                     else
                     {
-                        ExpressionEngine.Symbols.Add(parameters[0].ToLower(),
-                            new Symbol((uint)ExpressionEngine.Evaluate(parameter.Substring(parameter.IndexOf(' ') + 1).Trim(), PC)));
+                        if (Macros.Any(m => m.Name == parameters[0].ToLower()))
+                        {
+                            listing.Error = AssemblyError.DuplicateName;
+                            return listing;
+                        }
+                        Macros.Add(new Macro(parameters[0].ToLower(), new string[0], parameter.Substring(parameter.IndexOf(' ') + 1).Trim()));
                     }
                     return listing;
                 case "if":

@@ -185,7 +185,7 @@ namespace sass
         public static string GenerateListing(AssemblyOutput output)
         {
             // I know this can be optimized, I might optmize it eventually
-            int maxLineNumber = output.Listing.Max(l => l.LineNumber).ToString().Length;
+            int maxLineNumber = output.Listing.Max(l => l.CodeType == CodeType.Directive ? 0 : l.LineNumber).ToString().Length;
             int maxFileLength = output.Listing.Max(l => l.FileName.Length);
             int maxBinaryLength = output.Listing.Max(l =>
                 {
@@ -210,7 +210,7 @@ namespace sass
                 line = entry.LineNumber;
                 address = "0x" + entry.Address.ToString(addressFormatString);
                 code = entry.Code;
-                if (entry.Output != null && entry.Output.Length != 0)
+                if (entry.Output != null && entry.Output.Length != 0 && entry.CodeType != CodeType.Directive)
                 {
                     binary = string.Empty;
                     for (int i = 0; i < entry.Output.Length; i++)
