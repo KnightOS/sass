@@ -124,6 +124,10 @@ namespace sass
                     return Convert.ToUInt64(expression, 2);
                 else if (expression.StartsWith("0o")) // Octal
                     return Convert.ToUInt64(expression, 8);
+                else if (expression == "true")
+                    return 1;
+                else if (expression == "false")
+                    return 0;
                 else
                 {
                     // Check for number

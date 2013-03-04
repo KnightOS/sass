@@ -39,6 +39,8 @@ namespace sass
             IfStack = new Stack<bool>();
         }
 
+        readonly string[] closingIfDirectives = new[] { "endif", "else", "elif", "elseif" };
+
         public AssemblyOutput Assemble(string assembly, string fileName = null)
         {
             Output = new AssemblyOutput();
@@ -74,8 +76,14 @@ namespace sass
 
                 if (!IfStack.Peek())
                 {
-                    // TODO
-                    continue;
+                    bool match = false;
+                    if (CurrentLine.StartsWith("#") || CurrentLine.StartsWith("."))
+                    {
+                        if (closingIfDirectives.Contains(CurrentLine.Substring(1).ToLower()))
+                            match = true;
+                    }
+                    if (!match)
+                        continue;
                 }
 
                 if (CurrentLine.SafeContains(".equ") && !CurrentLine.StartsWith(".equ"))
@@ -182,7 +190,7 @@ namespace sass
                             LineNumber = LineNumbers.Peek(),
                             RootLineNumber = RootLineNumber
                         });
-                        ExpressionEngine.Symbols.Add(label, new Symbol(PC, true));
+                        ExpressionEngine.Symbols.Add(label.ToLower(), new Symbol(PC, true));
                     }
                 }
                 else
@@ -398,10 +406,19 @@ namespace sass
                         parameters = parameter.SafeSplit(',');
                         foreach (var p in parameters)
                         {
-                            if (p.StartsWith("\"") && p.EndsWith("\""))
-                                result.AddRange(Settings.Encoding.GetBytes(p.Substring(1, p.Length - 2).Unescape()));
+                            if (p.Trim().StartsWith("\"") && p.Trim().EndsWith("\""))
+                                result.AddRange(Settings.Encoding.GetBytes(p.Trim().Substring(1, p.Length - 2).Unescape()));
                             else
-                                result.Add((byte)ExpressionEngine.Evaluate(p, PC++));
+                            {
+                                try
+                                {
+                                    result.Add((byte)ExpressionEngine.Evaluate(p, PC++));
+                                }
+                                catch (KeyNotFoundException)
+                                {
+                                    listing.Error = AssemblyError.UnknownSymbol;
+                                }
+                            }
                         }
                         listing.Output = result.ToArray();
                         return listing;
@@ -503,7 +520,13 @@ namespace sass
                 case "define":
                     // TODO: Macro
                     // TODO: Equates in a different way
-                    ExpressionEngine.Symbols.Add(parameters[0], new Symbol((uint)ExpressionEngine.Evaluate(parameter.Substring(parameter.IndexOf(' ') + 1).Trim(), PC)));
+                    if (parameters.Length == 1)
+                        ExpressionEngine.Symbols.Add(parameters[0].ToLower(), new Symbol(1));
+                    else
+                    {
+                        ExpressionEngine.Symbols.Add(parameters[0].ToLower(),
+                            new Symbol((uint)ExpressionEngine.Evaluate(parameter.Substring(parameter.IndexOf(' ') + 1).Trim(), PC)));
+                    }
                     return listing;
                 case "if":
                     if (parameters.Length == 0)
@@ -524,6 +547,52 @@ namespace sass
                         listing.Error = AssemblyError.UnknownSymbol;
                     }
                     return listing;
+                case "ifdef":
+                    if (parameters.Length != 1)
+                    {
+                        listing.Error = AssemblyError.InvalidDirective;
+                        return listing;
+                    }
+                    IfStack.Push(ExpressionEngine.Symbols.ContainsKey(parameters[0].ToLower()));
+                    return listing;
+                case "ifndef":
+                    if (parameters.Length != 1)
+                    {
+                        listing.Error = AssemblyError.InvalidDirective;
+                        return listing;
+                    }
+                    IfStack.Push(!ExpressionEngine.Symbols.ContainsKey(parameters[0].ToLower()));
+                    return listing;
+                case "endif":
+                    if (parameters.Length != 0)
+                    {
+                        listing.Error = AssemblyError.InvalidDirective;
+                        return listing;
+                    }
+                    if (IfStack.Count == 1)
+                    {
+                        listing.Error = AssemblyError.UncoupledStatement;
+                        return listing;
+                    }
+                    IfStack.Pop();
+                    return listing;
+                case "else":
+                    if (parameters.Length != 0)
+                    {
+                        listing.Error = AssemblyError.InvalidDirective;
+                        return listing;
+                    }
+                    IfStack.Push(!IfStack.Pop());
+                    return listing;
+                //case "elif": // TODO: Requires major logic changes
+                //case "elseif":
+                //    if (IfStack.Peek())
+                //    {
+                //        IfStack.Pop();
+                //        IfStack.Push(false);
+                //        return listing;
+                //    }
+                //    return listing;
             }
             return null;
         }

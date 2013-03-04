@@ -14,6 +14,7 @@ namespace sass
         InvalidDirective = 4,
         DuplicateName = 5,
         InvalidExpression = 6,
-        UnknownSymbol
+        UnknownSymbol = 7,
+        UncoupledStatement = 8
     }
 }
