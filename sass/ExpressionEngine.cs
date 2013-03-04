@@ -9,6 +9,7 @@ namespace sass
     public class ExpressionEngine
     {
         public Dictionary<string, Symbol> Symbols { get; set; }
+        public string LastGlobalLabel { get; set; }
         // Grouped by priority, based on C operator precedence
         public static string[][] Operators = new[]
             {

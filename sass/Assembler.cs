@@ -147,7 +147,49 @@ namespace sass
                     }
                 }
 
-                if (CurrentLine.StartsWith(".") || CurrentLine.StartsWith("#")) // Directive
+                if (CurrentLine.StartsWith(":") || CurrentLine.EndsWith(":")) // Label
+                {
+                    string label;
+                    if (CurrentLine.StartsWith(":"))
+                        label = CurrentLine.Substring(1).Trim();
+                    else
+                        label = CurrentLine.Remove(CurrentLine.Length - 1).Trim();
+                    label = label.ToLower();
+                    bool local = label.StartsWith(".");
+                    if (local)
+                        label = label.Substring(1) + "@" + ExpressionEngine.LastGlobalLabel;
+                    bool valid = true;
+                    for (int k = 0; k < label.Length; k++) // Validate label
+                    {
+                        if (!char.IsLetterOrDigit(label[k]) && k != '_')
+                        {
+                            if (local && label[k] == '@')
+                                continue;
+                            valid = false;
+                            break;
+                        }
+                    }
+                    if (!valid)
+                        AddError(CodeType.Label, AssemblyError.InvalidLabel);
+                    else
+                    {
+                        Output.Listing.Add(new Listing
+                        {
+                            Code = CurrentLine,
+                            CodeType = CodeType.Label,
+                            Error = AssemblyError.None,
+                            Warning = AssemblyWarning.None,
+                            Address = PC,
+                            FileName = FileNames.Peek(),
+                            LineNumber = LineNumbers.Peek(),
+                            RootLineNumber = RootLineNumber
+                        });
+                        ExpressionEngine.Symbols.Add(label.ToLower(), new Symbol(PC, true));
+                        if (!local)
+                            ExpressionEngine.LastGlobalLabel = label.ToLower();
+                    }
+                }
+                else if (CurrentLine.StartsWith(".") || CurrentLine.StartsWith("#")) // Directive
                 {
                     // Some directives need to be handled higher up
                     var directive = CurrentLine.Substring(1).Trim().ToLower();
@@ -211,41 +253,6 @@ namespace sass
                             Output.Listing.Add(result);
                     }
                     continue;
-                }
-                else if (CurrentLine.StartsWith(":") || CurrentLine.EndsWith(":")) // Label
-                {
-                    string label;
-                    if (CurrentLine.StartsWith(":"))
-                        label = CurrentLine.Substring(1).Trim();
-                    else
-                        label = CurrentLine.Remove(CurrentLine.Length - 1).Trim();
-                    label = label.ToLower();
-                    bool valid = true;
-                    for (int k = 0; k < label.Length; k++) // Validate label
-                    {
-                        if (!char.IsLetterOrDigit(label[k]) && k != '_')
-                        {
-                            valid = false;
-                            break;
-                        }
-                    }
-                    if (!valid)
-                        AddError(CodeType.Label, AssemblyError.InvalidLabel);
-                    else
-                    {
-                        Output.Listing.Add(new Listing
-                        {
-                            Code = CurrentLine,
-                            CodeType = CodeType.Label,
-                            Error = AssemblyError.None,
-                            Warning = AssemblyWarning.None,
-                            Address = PC,
-                            FileName = FileNames.Peek(),
-                            LineNumber = LineNumbers.Peek(),
-                            RootLineNumber = RootLineNumber
-                        });
-                        ExpressionEngine.Symbols.Add(label.ToLower(), new Symbol(PC, true));
-                    }
                 }
                 else
                 {
@@ -320,6 +327,7 @@ namespace sass
         private AssemblyOutput Finish(AssemblyOutput output)
         {
             List<byte> finalBinary = new List<byte>();
+            ExpressionEngine.LastGlobalLabel = null;
             for (int i = 0; i < output.Listing.Count; i++)
             {
                 var entry = output.Listing[i];
@@ -336,7 +344,13 @@ namespace sass
                 }
                 if (entry.Error != AssemblyError.None)
                     continue;
-                if (entry.CodeType == CodeType.Instruction)
+                if (entry.CodeType == CodeType.Label)
+                {
+                    var name = entry.Code.Trim(':');
+                    if (!name.StartsWith("."))
+                        ExpressionEngine.LastGlobalLabel = name;
+                }
+                else if (entry.CodeType == CodeType.Instruction)
                 {
                     // Assemble output string
                     string instruction = entry.Instruction.Value.ToLower();
@@ -344,18 +358,20 @@ namespace sass
                         instruction = instruction.Replace("@" + operand.Key, operand.Value.Value);
                     foreach (var value in entry.Instruction.ImmediateValues)
                     {
-                        // TODO: Truncation warning
                         try
                         {
+                            bool truncated;
                             if (value.Value.RelativeToPC)
                                 instruction = instruction.Replace("^" + value.Key, ConvertToBinary(
                                     entry.Address -
                                     (ExpressionEngine.Evaluate(value.Value.Value, entry.Address) + entry.Instruction.Length),
-                                    value.Value.Bits));
+                                    value.Value.Bits, out truncated));
                             else
                                 instruction = instruction.Replace("%" + value.Key, ConvertToBinary(
                                     ExpressionEngine.Evaluate(value.Value.Value, entry.Address),
-                                    value.Value.Bits));
+                                    value.Value.Bits, out truncated));
+                            if (truncated)
+                                entry.Warning = AssemblyWarning.ValueTruncated;
                         }
                         catch (KeyNotFoundException)
                         {
@@ -374,18 +390,22 @@ namespace sass
             return output;
         }
 
-        private static string ConvertToBinary(ulong value, int bits) // Little endian octets
+        private static string ConvertToBinary(ulong value, int bits, out bool truncated) // Little endian octets
         {
             ulong mask = 1;
             string result = "";
+            ulong truncationMask = 1;
             for (int i = 0; i < bits; i++)
             {
+                truncationMask <<= 1;
+                truncationMask |= 1;
                 if ((value & mask) == mask)
                     result = "1" + result;
                 else
                     result = "0" + result;
                 mask <<= 1;
             }
+            truncated = value > truncationMask;
             // Convert to little endian
             string little = "";
             for (int i = 0; i < result.Length; i += 8)
