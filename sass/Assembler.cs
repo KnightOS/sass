@@ -415,6 +415,8 @@ namespace sass
             }
             truncated = (long)value > (long)truncationMask;
             // Convert to little endian
+            if (result.Length % 8 != 0)
+                return result;
             string little = "";
             for (int i = 0; i < result.Length; i += 8)
                 little = result.Substring(i, 8) + little;
@@ -446,310 +448,335 @@ namespace sass
                 LineNumber = LineNumbers.Peek(),
                 RootLineNumber = RootLineNumber
             };
-            switch (directive)
+            try
             {
-                case "block":
+                switch (directive)
                 {
-                    ulong amount = ExpressionEngine.Evaluate(parameter, PC, RootLineNumber);
-                    listing.Output = new byte[amount];
-                    PC += (uint)amount;
-                    return listing;
-                }
-                case "byte":
-                case "db":
-                {
-                    if (passTwo)
-                    {
-                        var result = new List<byte>();
-                        parameters = parameter.SafeSplit(',');
-                        foreach (var p in parameters)
+                    case "block":
                         {
-                            if (p.Trim().StartsWith("\"") && p.Trim().EndsWith("\""))
-                                result.AddRange(Settings.Encoding.GetBytes(p.Trim().Substring(1, p.Length - 2).Unescape()));
+                            ulong amount = ExpressionEngine.Evaluate(parameter, PC, RootLineNumber);
+                            listing.Output = new byte[amount];
+                            PC += (uint)amount;
+                            return listing;
+                        }
+                    case "byte":
+                    case "db":
+                        {
+                            if (passTwo)
+                            {
+                                var result = new List<byte>();
+                                parameters = parameter.SafeSplit(',');
+                                foreach (var p in parameters)
+                                {
+                                    if (p.Trim().StartsWith("\"") && p.Trim().EndsWith("\""))
+                                        result.AddRange(
+                                            Settings.Encoding.GetBytes(p.Trim().Substring(1, p.Length - 2).Unescape()));
+                                    else
+                                    {
+                                        try
+                                        {
+                                            result.Add((byte)ExpressionEngine.Evaluate(p, PC++, RootLineNumber));
+                                        }
+                                        catch (KeyNotFoundException)
+                                        {
+                                            listing.Error = AssemblyError.UnknownSymbol;
+                                        }
+                                    }
+                                }
+                                listing.Output = result.ToArray();
+                                return listing;
+                            }
                             else
                             {
-                                try
+                                parameters = parameter.SafeSplit(',');
+                                int length = 0;
+                                foreach (var p in parameters)
                                 {
-                                    result.Add((byte)ExpressionEngine.Evaluate(p, PC++, RootLineNumber));
+                                    if (p.StartsWith("\"") && p.EndsWith("\""))
+                                        length += p.Substring(1, p.Length - 2).Unescape().Length;
+                                    else
+                                        length++;
                                 }
-                                catch (KeyNotFoundException)
-                                {
-                                    listing.Error = AssemblyError.UnknownSymbol;
-                                }
+                                listing.Output = new byte[length];
+                                listing.PostponeEvalulation = true;
+                                PC += (uint)listing.Output.Length;
+                                return listing;
                             }
                         }
-                        listing.Output = result.ToArray();
-                        return listing;
-                    }
-                    else
-                    {
-                        parameters = parameter.SafeSplit(',');
-                        int length = 0;
-                        foreach (var p in parameters)
+                    case "word":
+                    case "dw":
                         {
-                            if (p.StartsWith("\"") && p.EndsWith("\""))
-                                length += p.Substring(1, p.Length - 2).Unescape().Length;
+                            if (passTwo)
+                            {
+                                var result = new List<byte>();
+                                parameters = parameter.SafeSplit(',');
+                                foreach (var item in parameters)
+                                    result.AddRange(TruncateWord(ExpressionEngine.Evaluate(item, PC++, RootLineNumber)));
+                                listing.Output = result.ToArray();
+                                return listing;
+                            }
                             else
-                                length++;
+                            {
+                                listing.Output = new byte[parameters.Length * (InstructionSet.WordSize / 8)];
+                                listing.PostponeEvalulation = true;
+                                PC += (uint)listing.Output.Length;
+                                return listing;
+                            }
                         }
-                        listing.Output = new byte[length];
-                        listing.PostponeEvalulation = true;
-                        PC += (uint)listing.Output.Length;
-                        return listing;
-                    }
-                }
-                case "word":
-                case "dw":
-                {
-                    if (passTwo)
-                    {
-                        var result = new List<byte>();
-                        parameters = parameter.SafeSplit(',');
-                        foreach (var item in parameters)
-                            result.AddRange(TruncateWord(ExpressionEngine.Evaluate(item, PC++, RootLineNumber)));
-                        listing.Output = result.ToArray();
-                        return listing;
-                    }
-                    else
-                    {
-                        listing.Output = new byte[parameters.Length * (InstructionSet.WordSize / 8)];
-                        listing.PostponeEvalulation = true;
-                        PC += (uint)listing.Output.Length;
-                        return listing;
-                    }
-                }
-                case "error":
-                case "echo":
-                {
-                    string output = "";
-                    foreach (var item in parameters)
-                    {
-                        if (item.Trim().StartsWith("\"") && item.EndsWith("\""))
-                            output += item.Substring(1, item.Length - 2);
-                        else
-                            output += ExpressionEngine.Evaluate(item, PC, RootLineNumber);
-                    }
-                    Console.WriteLine((directive == "error" ? "User Error: " : "") + output);
-                    return listing;
-                }
-                case "end":
-                    return listing;
-                case "fill":
-                {
-                    ulong amount = ExpressionEngine.Evaluate(parameters[0], PC, RootLineNumber);
-                    if (parameters.Length == 1)
-                    {
-                        Array.Resize<string>(ref parameters, 2);
-                        parameters[1] = "0";
-                    }
-                    listing.Output = new byte[amount];
-                    for (int i = 0; i < (int)amount; i++)
-                        listing.Output[i] = (byte)ExpressionEngine.Evaluate(parameters[1], PC++, RootLineNumber);
-                    return listing;
-                }
-                case "org":
-                    PC = (uint)ExpressionEngine.Evaluate(parameter, PC, RootLineNumber);
-                    return listing;
-                case "include":
-                    {
-                        string file = GetIncludeFile(parameter);
-                        if (file == null)
+                    case "error":
+                    case "echo":
                         {
-                            listing.Error = AssemblyError.FileNotFound;
+                            string output = "";
+                            foreach (var item in parameters)
+                            {
+                                if (item.Trim().StartsWith("\"") && item.EndsWith("\""))
+                                    output += item.Substring(1, item.Length - 2);
+                                else
+                                    output += ExpressionEngine.Evaluate(item, PC, RootLineNumber);
+                            }
+                            Console.WriteLine((directive == "error" ? "User Error: " : "") + output);
                             return listing;
                         }
-                        FileNames.Push(parameter.Substring(1, parameter.Length - 2));
-                        LineNumbers.Push(0);
-                        string includedFile = File.ReadAllText(file) + "\n.endfile";
-                        string[] lines = includedFile.Replace("\r", "").Split('\n');
-                        Lines = Lines.Take(CurrentIndex + 1).Concat(lines).Concat(Lines.Skip(CurrentIndex + 1)).ToArray();
+                    case "end":
                         return listing;
-                    }
-                case "endfile": // Special, undocumented directive
-                    RootLineNumber--;
-                    LineNumbers.Pop();
-                    FileNames.Pop();
-                    return null;
-                case "equ":
-                    if (parameters.Length == 1)
-                    {
-                        if (ExpressionEngine.Symbols.ContainsKey(parameters[0].ToLower()))
+                    case "fill":
                         {
-                            listing.Error = AssemblyError.DuplicateName;
+                            ulong amount = ExpressionEngine.Evaluate(parameters[0], PC, RootLineNumber);
+                            if (parameters.Length == 1)
+                            {
+                                Array.Resize<string>(ref parameters, 2);
+                                parameters[1] = "0";
+                            }
+                            listing.Output = new byte[amount];
+                            for (int i = 0; i < (int)amount; i++)
+                                listing.Output[i] = (byte)ExpressionEngine.Evaluate(parameters[1], PC++, RootLineNumber);
                             return listing;
                         }
-                        ExpressionEngine.Symbols.Add(parameters[0].ToLower(), new Symbol(1));
-                    }
-                    else
-                    {
-                        if (ExpressionEngine.Symbols.ContainsKey(parameters[0].ToLower()))
+                    case "org":
+                        PC = (uint)ExpressionEngine.Evaluate(parameter, PC, RootLineNumber);
+                        return listing;
+                    case "include":
                         {
-                            listing.Error = AssemblyError.DuplicateName;
+                            string file = GetIncludeFile(parameter);
+                            if (file == null)
+                            {
+                                listing.Error = AssemblyError.FileNotFound;
+                                return listing;
+                            }
+                            FileNames.Push(parameter.Substring(1, parameter.Length - 2));
+                            LineNumbers.Push(0);
+                            string includedFile = File.ReadAllText(file) + "\n.endfile";
+                            string[] lines = includedFile.Replace("\r", "").Split('\n');
+                            Lines =
+                                Lines.Take(CurrentIndex + 1)
+                                     .Concat(lines)
+                                     .Concat(Lines.Skip(CurrentIndex + 1))
+                                     .ToArray();
                             return listing;
                         }
-                        ExpressionEngine.Symbols.Add(parameters[0].ToLower(), new Symbol(
-                            (uint)ExpressionEngine.Evaluate(parameter.Substring(parameter.IndexOf(' ') + 1).Trim(), PC, RootLineNumber)));
-                    }
-                    return listing;
-                case "define":
-                    if (parameters.Length == 1)
-                    {
-                        if (ExpressionEngine.Symbols.ContainsKey(parameters[0].ToLower()))
+                    case "endfile": // Special, undocumented directive
+                        RootLineNumber--;
+                        LineNumbers.Pop();
+                        FileNames.Pop();
+                        return null;
+                    case "equ":
+                        if (parameters.Length == 1)
                         {
-                            listing.Error = AssemblyError.DuplicateName;
-                            return listing;
-                        }
-                        ExpressionEngine.Symbols.Add(parameters[0].ToLower(), new Symbol(1));
-                    }
-                    else
-                    {
-                        var macro = new Macro();
-                        if (parameter.Contains("("))
-                        {
-                            var parameterDefinition = parameter.Substring(parameter.SafeIndexOf('(') + 1);
-                            parameterDefinition = parameterDefinition.Remove(parameterDefinition.SafeIndexOf(')'));
-                            // NOTE: This probably introduces the ability to use ".macro foo(bar)this_doesnt_cause_errors"
-                            macro.Parameters = parameterDefinition.SafeSplit(',');
-                            for (int i = 0; i < macro.Parameters.Length; i++)
-                                macro.Parameters[i] = macro.Parameters[i].Trim();
-                            macro.Name = parameter.Remove(parameter.SafeIndexOf('('));
-                            macro.Code = parameter.Substring(parameter.SafeIndexOf(')') + 1);
+                            if (ExpressionEngine.Symbols.ContainsKey(parameters[0].ToLower()))
+                            {
+                                listing.Error = AssemblyError.DuplicateName;
+                                return listing;
+                            }
+                            ExpressionEngine.Symbols.Add(parameters[0].ToLower(), new Symbol(1));
                         }
                         else
                         {
-                            macro.Name = parameter.Remove(parameter.SafeIndexOf(' ') + 1); // TODO: Consider enforcing character usage restrictions
-                            macro.Code = parameter.Substring(parameter.SafeIndexOf(' ') + 1).Trim();
+                            if (ExpressionEngine.Symbols.ContainsKey(parameters[0].ToLower()))
+                            {
+                                listing.Error = AssemblyError.DuplicateName;
+                                return listing;
+                            }
+                            ExpressionEngine.Symbols.Add(parameters[0].ToLower(), new Symbol(
+                                                                                      (uint)
+                                                                                      ExpressionEngine.Evaluate(
+                                                                                          parameter.Substring(
+                                                                                              parameter.IndexOf(' ') + 1)
+                                                                                                   .Trim(), PC,
+                                                                                          RootLineNumber)));
                         }
-                        macro.Name = macro.Name.ToLower();
-                        if (Macros.Any(m => m.Name == macro.Name))
-                        {
-                            listing.Error = AssemblyError.DuplicateName;
-                            return listing;
-                        }
-                        Macros.Add(macro);
-                    }
-                    return listing;
-                case "if":
-                    if (parameters.Length == 0)
-                    {
-                        listing.Error = AssemblyError.InvalidDirective;
                         return listing;
-                    }
-                    try
-                    {
-                        IfStack.Push(ExpressionEngine.Evaluate(parameter, PC, RootLineNumber) != 0);
-                    }
-                    catch (InvalidOperationException)
-                    {
-                        listing.Error = AssemblyError.InvalidExpression;
-                    }
-                    catch (KeyNotFoundException)
-                    {
-                        listing.Error = AssemblyError.UnknownSymbol;
-                    }
-                    return listing;
-                case "ifdef":
-                    {
-                        if (parameters.Length != 1)
+                    case "define":
+                        if (parameters.Length == 1)
+                        {
+                            if (ExpressionEngine.Symbols.ContainsKey(parameters[0].ToLower()))
+                            {
+                                listing.Error = AssemblyError.DuplicateName;
+                                return listing;
+                            }
+                            ExpressionEngine.Symbols.Add(parameters[0].ToLower(), new Symbol(1));
+                        }
+                        else
+                        {
+                            var macro = new Macro();
+                            if (parameter.Contains("("))
+                            {
+                                var parameterDefinition = parameter.Substring(parameter.SafeIndexOf('(') + 1);
+                                parameterDefinition = parameterDefinition.Remove(parameterDefinition.SafeIndexOf(')'));
+                                // NOTE: This probably introduces the ability to use ".macro foo(bar)this_doesnt_cause_errors"
+                                macro.Parameters = parameterDefinition.SafeSplit(',');
+                                for (int i = 0; i < macro.Parameters.Length; i++)
+                                    macro.Parameters[i] = macro.Parameters[i].Trim();
+                                macro.Name = parameter.Remove(parameter.SafeIndexOf('('));
+                                macro.Code = parameter.Substring(parameter.SafeIndexOf(')') + 1);
+                            }
+                            else
+                            {
+                                macro.Name = parameter.Remove(parameter.SafeIndexOf(' ') + 1);
+                                    // TODO: Consider enforcing character usage restrictions
+                                macro.Code = parameter.Substring(parameter.SafeIndexOf(' ') + 1).Trim();
+                            }
+                            macro.Name = macro.Name.ToLower();
+                            if (Macros.Any(m => m.Name == macro.Name))
+                            {
+                                listing.Error = AssemblyError.DuplicateName;
+                                return listing;
+                            }
+                            Macros.Add(macro);
+                        }
+                        return listing;
+                    case "if":
+                        if (parameters.Length == 0)
                         {
                             listing.Error = AssemblyError.InvalidDirective;
                             return listing;
                         }
-                        var result = ExpressionEngine.Symbols.ContainsKey(parameters[0].ToLower());
-                        if (!result)
-                            result = Macros.Any(m => m.Name.ToLower() == parameters[0].ToLower());
-                        IfStack.Push(result);
+                        try
+                        {
+                            IfStack.Push(ExpressionEngine.Evaluate(parameter, PC, RootLineNumber) != 0);
+                        }
+                        catch (InvalidOperationException)
+                        {
+                            listing.Error = AssemblyError.InvalidExpression;
+                        }
+                        catch (KeyNotFoundException)
+                        {
+                            listing.Error = AssemblyError.UnknownSymbol;
+                        }
                         return listing;
-                    }
-                case "ifndef":
-                    {
-                        if (parameters.Length != 1)
+                    case "ifdef":
+                        {
+                            if (parameters.Length != 1)
+                            {
+                                listing.Error = AssemblyError.InvalidDirective;
+                                return listing;
+                            }
+                            var result = ExpressionEngine.Symbols.ContainsKey(parameters[0].ToLower());
+                            if (!result)
+                                result = Macros.Any(m => m.Name.ToLower() == parameters[0].ToLower());
+                            IfStack.Push(result);
+                            return listing;
+                        }
+                    case "ifndef":
+                        {
+                            if (parameters.Length != 1)
+                            {
+                                listing.Error = AssemblyError.InvalidDirective;
+                                return listing;
+                            }
+                            var result = ExpressionEngine.Symbols.ContainsKey(parameters[0].ToLower());
+                            if (!result)
+                                result = Macros.Any(m => m.Name.ToLower() == parameters[0].ToLower());
+                            IfStack.Push(!result);
+                            return listing;
+                        }
+                    case "endif":
+                        if (parameters.Length != 0)
                         {
                             listing.Error = AssemblyError.InvalidDirective;
                             return listing;
                         }
-                        var result = ExpressionEngine.Symbols.ContainsKey(parameters[0].ToLower());
-                        if (!result)
-                            result = Macros.Any(m => m.Name.ToLower() == parameters[0].ToLower());
-                        IfStack.Push(!result);
+                        if (IfStack.Count == 1)
+                        {
+                            listing.Error = AssemblyError.UncoupledStatement;
+                            return listing;
+                        }
+                        IfStack.Pop();
                         return listing;
-                    }
-                case "endif":
-                    if (parameters.Length != 0)
-                    {
-                        listing.Error = AssemblyError.InvalidDirective;
+                    case "else":
+                        if (parameters.Length != 0)
+                        {
+                            listing.Error = AssemblyError.InvalidDirective;
+                            return listing;
+                        }
+                        IfStack.Push(!IfStack.Pop());
                         return listing;
-                    }
-                    if (IfStack.Count == 1)
-                    {
-                        listing.Error = AssemblyError.UncoupledStatement;
+                        //case "elif": // TODO: Requires major logic changes
+                        //case "elseif":
+                        //    if (IfStack.Peek())
+                        //    {
+                        //        IfStack.Pop();
+                        //        IfStack.Push(false);
+                        //        return listing;
+                        //    }
+                        //    return listing;
+                    case "ascii":
+                        if (parameters.Length == 0)
+                        {
+                            listing.Error = AssemblyError.InvalidDirective;
+                            return listing;
+                        }
+                        if (!(parameter.StartsWith("\"") && parameter.EndsWith("\"")))
+                        {
+                            listing.Error = AssemblyError.InvalidDirective;
+                            return listing;
+                        }
+                        parameter = parameter.Substring(1, parameter.Length - 2);
+                        listing.Output = Settings.Encoding.GetBytes(parameter.Unescape());
                         return listing;
-                    }
-                    IfStack.Pop();
-                    return listing;
-                case "else":
-                    if (parameters.Length != 0)
-                    {
-                        listing.Error = AssemblyError.InvalidDirective;
+                    case "asciiz":
+                        if (parameters.Length == 0)
+                        {
+                            listing.Error = AssemblyError.InvalidDirective;
+                            return listing;
+                        }
+                        if (!(parameter.StartsWith("\"") && parameter.EndsWith("\"")))
+                        {
+                            listing.Error = AssemblyError.InvalidDirective;
+                            return listing;
+                        }
+                        parameter = parameter.Substring(1, parameter.Length - 2);
+                        listing.Output =
+                            Settings.Encoding.GetBytes(parameter.Unescape()).Concat(new byte[] {0}).ToArray();
                         return listing;
-                    }
-                    IfStack.Push(!IfStack.Pop());
-                    return listing;
-                //case "elif": // TODO: Requires major logic changes
-                //case "elseif":
-                //    if (IfStack.Peek())
-                //    {
-                //        IfStack.Pop();
-                //        IfStack.Push(false);
-                //        return listing;
-                //    }
-                //    return listing;
-                case "ascii":
-                    if (parameters.Length == 0)
-                    {
-                        listing.Error = AssemblyError.InvalidDirective;
+                    case "asciip":
+                        if (parameters.Length == 0)
+                        {
+                            listing.Error = AssemblyError.InvalidDirective;
+                            return listing;
+                        }
+                        if (!(parameter.StartsWith("\"") && parameter.EndsWith("\"")))
+                        {
+                            listing.Error = AssemblyError.InvalidDirective;
+                            return listing;
+                        }
+                        parameter = parameter.Substring(1, parameter.Length - 2);
+                        listing.Output = Settings.Encoding.GetBytes(parameter.Unescape());
+                        listing.Output = new byte[] {(byte)parameter.Length}.Concat(listing.Output).ToArray();
                         return listing;
-                    }
-                    if (!(parameter.StartsWith("\"") && parameter.EndsWith("\"")))
-                    {
-                        listing.Error = AssemblyError.InvalidDirective;
+                    case "nolist":
+                        Listing = false;
                         return listing;
-                    }
-                    parameter = parameter.Substring(1, parameter.Length - 2);
-                    listing.Output = Settings.Encoding.GetBytes(parameter.Unescape());
-                    return listing;
-                case "asciiz":
-                    if (parameters.Length == 0)
-                    {
-                        listing.Error = AssemblyError.InvalidDirective;
-                        return listing;
-                    }
-                    if (!(parameter.StartsWith("\"") && parameter.EndsWith("\"")))
-                    {
-                        listing.Error = AssemblyError.InvalidDirective;
-                        return listing;
-                    }
-                    parameter = parameter.Substring(1, parameter.Length - 2);
-                    listing.Output = Settings.Encoding.GetBytes(parameter.Unescape()).Concat(new byte[] { 0 }).ToArray();
-                    return listing;
-                case "asciip":
-                    if (parameters.Length == 0)
-                    {
-                        listing.Error = AssemblyError.InvalidDirective;
-                        return listing;
-                    }
-                    if (!(parameter.StartsWith("\"") && parameter.EndsWith("\"")))
-                    {
-                        listing.Error = AssemblyError.InvalidDirective;
-                        return listing;
-                    }
-                    parameter = parameter.Substring(1, parameter.Length - 2);
-                    listing.Output = Settings.Encoding.GetBytes(parameter.Unescape());
-                    listing.Output = new byte[] { (byte)parameter.Length }.Concat(listing.Output).ToArray();
-                    return listing;
-                case "nolist":
-                    Listing = false;
-                    return listing;
+                }
+            }
+            catch (KeyNotFoundException)
+            {
+                listing.Error = AssemblyError.UnknownSymbol;
+                return listing;
+            }
+            catch (InvalidOperationException)
+            {
+                listing.Error = AssemblyError.InvalidExpression;
+                return listing;
             }
             return null;
         }

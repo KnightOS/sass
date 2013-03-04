@@ -78,8 +78,18 @@ namespace sass
                     return (ulong)-(long)Evaluate(parts[2], PC, rootLineNumber);
                 if (parts[0] == "" && parts[1] == "~") // NOT
                     return ~Evaluate(parts[2], PC, rootLineNumber);
+                if (parts[0] == string.Empty && parts[1] == "%")
+                    return Convert.ToUInt64(expression.Trim('%', 'b'), 2);
                 switch (parts[1]) // Evaluate
                 {
+                    case "+":
+                        return Evaluate(parts[0], PC, rootLineNumber)
+                               +
+                               Evaluate(parts[2], PC, rootLineNumber);
+                    case "-":
+                        return Evaluate(parts[0], PC, rootLineNumber)
+                               -
+                               Evaluate(parts[2], PC, rootLineNumber);
                     case "*":
                         return Evaluate(parts[0], PC, rootLineNumber)
                                *
@@ -91,10 +101,6 @@ namespace sass
                     case "%":
                         return Evaluate(parts[0], PC, rootLineNumber)
                                %
-                               Evaluate(parts[2], PC, rootLineNumber);
-                    case "+":
-                        return Evaluate(parts[0], PC, rootLineNumber)
-                               +
                                Evaluate(parts[2], PC, rootLineNumber);
                     case "<<":
                         return Evaluate(parts[0], PC, rootLineNumber)
@@ -155,12 +161,18 @@ namespace sass
                 // Interpret value
                 if (expression == "$")
                     return PC;
-                else if (expression.StartsWith("0x") || expression.StartsWith("$") || expression.EndsWith("h")) // Hex
-                    return Convert.ToUInt64(expression, 16);
-                else if (expression.StartsWith("0b") || expression.StartsWith("%") || expression.EndsWith("b")) // Binary
-                    return Convert.ToUInt64(expression, 2);
+                else if (expression.StartsWith("0x")) // Hex
+                    return Convert.ToUInt64(expression.Substring(2), 16);
+                else if (expression.StartsWith("$") || (expression.EndsWith("h") && 
+                    expression.Remove(expression.Length - 1).ToLower().Count(c => !"0123456789abcdef".Contains(c)) == 0))
+                    return Convert.ToUInt64(expression.Trim('$', 'h'), 16);
+                else if (expression.StartsWith("0b")) // Binary
+                    return Convert.ToUInt64(expression.Substring(2), 2);
+                else if (expression.StartsWith("$") || (expression.EndsWith("h") &&
+                    expression.Remove(expression.Length - 1).ToLower().Count(c => !"01".Contains(c)) == 0))
+                    return Convert.ToUInt64(expression.Trim('%', 'b'), 2);
                 else if (expression.StartsWith("0o")) // Octal
-                    return Convert.ToUInt64(expression, 8);
+                    return Convert.ToUInt64(expression.Substring(2), 8);
                 else if (expression == "true")
                     return 1;
                 else if (expression == "false")

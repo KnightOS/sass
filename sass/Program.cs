@@ -5,6 +5,7 @@ using System.Text;
 using System.IO;
 using System.Reflection;
 using System.Diagnostics;
+using System.Threading;
 
 namespace sass
 {
@@ -21,6 +22,7 @@ namespace sass
             string instructionSet = "z80"; // Default
             string inputFile = null, outputFile = null;
             var settings = new AssemblySettings();
+            List<string> defines = new List<string>();
 
             for (int i = 0; i < args.Length; i++)
             {
@@ -31,6 +33,13 @@ namespace sass
                     {
                         switch (arg)
                         {
+                            case "-d":
+                            case "--define":
+                                defines.AddRange(args[++i].Split(','));
+                                break;
+                            case "--debug-mode":
+                                Thread.Sleep(5000);
+                                break;
                             case "--encoding":
                                 try
                                 {
@@ -129,6 +138,8 @@ namespace sass
                 selectedInstructionSet = InstructionSets[instructionSet];
 
             var assembler = new Assembler(selectedInstructionSet, settings);
+            foreach (var define in defines)
+                assembler.ExpressionEngine.Symbols.Add(define, new Symbol(1));
             string file = File.ReadAllText(inputFile);
             var watch = new Stopwatch();
             watch.Start();
