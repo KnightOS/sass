@@ -199,6 +199,8 @@ namespace sass
                             }
                             if (!valid)
                                 AddError(CodeType.Label, AssemblyError.InvalidLabel);
+                            else if (ExpressionEngine.Symbols.ContainsKey(label.ToLower()))
+                                AddError(CodeType.Label, AssemblyError.DuplicateName);
                             else
                             {
                                 AddOutput(CodeType.Label);
@@ -247,6 +249,8 @@ namespace sass
                         }
                         if (!valid)
                             AddError(CodeType.Label, AssemblyError.InvalidLabel);
+                        else if (ExpressionEngine.Symbols.ContainsKey(label.ToLower()))
+                            AddError(CodeType.Label, AssemblyError.DuplicateName);
                         else
                         {
                             AddOutput(CodeType.Label);
