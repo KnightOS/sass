@@ -139,7 +139,7 @@ namespace sass
 
             var assembler = new Assembler(selectedInstructionSet, settings);
             foreach (var define in defines)
-                assembler.ExpressionEngine.Symbols.Add(define, new Symbol(1));
+                assembler.ExpressionEngine.Symbols.Add(define.ToLower(), new Symbol(1));
             string file = File.ReadAllText(inputFile);
             var watch = new Stopwatch();
             watch.Start();

@@ -31,7 +31,7 @@ namespace sass
         {
             InstructionSet = instructionSet;
             Settings = settings;
-            ExpressionEngine = new ExpressionEngine();
+            ExpressionEngine = new ExpressionEngine(settings);
             SuspendedLines = 0;
             LineNumbers = new Stack<int>();
             FileNames = new Stack<string>();
@@ -93,7 +93,7 @@ namespace sass
                 {
                     var name = CurrentLine.Remove(CurrentLine.SafeIndexOf(".equ"));
                     var definition = CurrentLine.Substring(CurrentLine.SafeIndexOf(".equ") + 4);
-                    CurrentLine = ".equ " + name.Trim() + ", " + definition.Trim();
+                    CurrentLine = ".equ " + name.Trim() + " " + definition.Trim();
                 }
 
                 // Check for macro

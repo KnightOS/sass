@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace sass
@@ -11,6 +12,7 @@ namespace sass
         public Dictionary<string, Symbol> Symbols { get; set; }
         public List<RelativeLabel> RelativeLabels { get; set; }
         public string LastGlobalLabel { get; set; }
+        public AssemblySettings Settings { get; set; }
         // Grouped by priority, based on C operator precedence
         public static string[][] Operators = new[]
             {
@@ -26,10 +28,11 @@ namespace sass
                 new[] { "||" }
             };
 
-        public ExpressionEngine()
+        public ExpressionEngine(AssemblySettings settings)
         {
             Symbols = new Dictionary<string, Symbol>();
             RelativeLabels = new List<RelativeLabel>();
+            Settings = settings;
         }
 
         public ulong Evaluate(string expression, uint PC, int rootLineNumber)
@@ -176,6 +179,13 @@ namespace sass
                     return 1;
                 else if (expression == "false")
                     return 0;
+                else if (expression.StartsWith("'") && expression.EndsWith("'"))
+                {
+                    var character = expression.Substring(1, expression.Length - 2);
+                    if (character.Length != 1)
+                        throw new InvalidOperationException("Invalid character.");
+                    return Settings.Encoding.GetBytes(character)[0];
+                }
                 else
                 {
                     // Check for number
