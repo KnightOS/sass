@@ -259,8 +259,21 @@ namespace sass
                                 ExpressionEngine.LastGlobalLabel = label.ToLower();
                         }
                     }
+                    continue;
                 }
-                else if (CurrentLine.StartsWith(".") || CurrentLine.StartsWith("#")) // Directive
+
+                if (CurrentLine.SafeContains('\\'))
+                {
+                    // Split lines up
+                    var split = CurrentLine.SafeSplit('\\');
+                    Lines = Lines.Take(CurrentIndex).Concat(split).
+                        Concat(Lines.Skip(CurrentIndex + 1)).ToArray();
+                    SuspendedLines = split.Length;
+                    CurrentIndex--;
+                    continue;
+                }
+
+                if (CurrentLine.StartsWith(".") || CurrentLine.StartsWith("#")) // Directive
                 {
                     // Some directives need to be handled higher up
                     var directive = CurrentLine.Substring(1).Trim().ToLower();
@@ -327,16 +340,6 @@ namespace sass
                 }
                 else
                 {
-                    if (CurrentLine.SafeContains('\\'))
-                    {
-                        // Split lines up
-                        var split = CurrentLine.SafeSplit('\\');
-                        Lines = Lines.Take(CurrentIndex).Concat(split).
-                            Concat(Lines.Skip(CurrentIndex + 1)).ToArray();
-                        SuspendedLines = split.Length;
-                        CurrentIndex--;
-                        continue;
-                    }
                     if (string.IsNullOrEmpty(CurrentLine))
                         continue;
                     // Check instructions
