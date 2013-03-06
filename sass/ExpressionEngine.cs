@@ -216,7 +216,7 @@ namespace sass
             {
                 for (int j = 0; j < Operators[i].Length; j++)
                 {
-                    int index = expression.IndexOf(Operators[i][j]);
+                    int index = expression.SafeIndexOf(Operators[i][j]);
                     if (index != -1)
                     {
                         // Split along this operator
@@ -238,7 +238,7 @@ namespace sass
             {
                 for (int j = 0; j < Operators[i].Length; j++)
                 {
-                    if (expression.Contains(Operators[i][j]))
+                    if (expression.SafeContains(Operators[i][j]))
                         return true;
                 }
             }
