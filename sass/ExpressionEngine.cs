@@ -71,6 +71,15 @@ namespace sass
                     return RelativeLabels[i].Address;
                 }
             }
+            while (expression.SafeContains('(') && expression.SafeContains(')'))
+            {
+                int index = -1;
+                int length = -1;
+                GetParenthesis(expression, out index, out length);
+                var subexpression = expression.Substring(index + 1, length - 2);
+                expression = expression.Remove(index) + Evaluate(subexpression, PC, rootLineNumber) +
+                    expression.Substring(index + length);
+            }
             // Check for parenthesis
             if (HasOperators(expression))
             {
@@ -181,7 +190,7 @@ namespace sass
                     return 0;
                 else if (expression.StartsWith("'") && expression.EndsWith("'"))
                 {
-                    var character = expression.Substring(1, expression.Length - 2);
+                    var character = expression.Substring(1, expression.Length - 2).Unescape();
                     if (character.Length != 1)
                         throw new InvalidOperationException("Invalid character.");
                     return Settings.Encoding.GetBytes(character)[0];
@@ -208,6 +217,37 @@ namespace sass
                 }
             }
             throw new InvalidOperationException("Invalid expression");
+        }
+
+        private void GetParenthesis(string expression, out int index, out int length)
+        {
+            length = -1;
+            index = -1;
+            int stack = 1;
+            bool inChar = false, suspendEvaluation = false;
+            for (int i = 0; i < expression.Length && stack != 0; i++)
+            {
+                if (expression[i] == '(' && !inChar)
+                {
+                    if (length == -1)
+                    {
+                        length = 0;
+                        index = i;
+                    }
+                    else
+                        stack++;
+                }
+                if (expression[i] == ')' && !inChar)
+                    stack--;
+                if (expression[i] == '\'' && !suspendEvaluation)
+                    inChar = !inChar;
+                if (suspendEvaluation)
+                    suspendEvaluation = false;
+                else if (expression[i] == '\\')
+                    suspendEvaluation = true;
+                if (length >= 0)
+                    length++;
+            }
         }
 
         private string[] SplitExpression(string expression)

@@ -51,11 +51,11 @@ namespace sass
             return value.Trim();
         }
 
-        public static int SafeIndexOf(this string value, char needle)
+        public static int SafeIndexOf(this string value, char needle, int index)
         {
             value = value.Trim();
             bool inString = false, inChar = false;
-            for (int i = 0; i < value.Length; i++)
+            for (int i = index; i < value.Length; i++)
             {
                 if (value[i] == needle && !inString && !inChar)
                     return i;
@@ -65,6 +65,11 @@ namespace sass
                     inChar = !inChar;
             }
             return -1;
+        }
+
+        public static int SafeIndexOf(this string value, char needle)
+        {
+            return SafeIndexOf(value, needle, 0);
         }
 
         public static int SafeIndexOf(this string value, string needle)

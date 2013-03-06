@@ -215,7 +215,7 @@ namespace sass
             }
             if (delimiter == null)
                 return code.Substring(j);
-            int index = code.IndexOf(delimiter.Value, j);
+            int index = code.SafeIndexOf(delimiter.Value, j);
             if (index == -1)
                 return null;
             return code.Substring(j, index - j);
