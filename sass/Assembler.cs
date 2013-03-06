@@ -617,6 +617,7 @@ namespace sass
                         return listing;
                     case "fill":
                         {
+                            parameters = parameter.SafeSplit(',');
                             ulong amount = ExpressionEngine.Evaluate(parameters[0], PC, RootLineNumber);
                             if (parameters.Length == 1)
                             {

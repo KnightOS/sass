@@ -1,10 +1,15 @@
-﻿rst 0x00
-rst 0x08
-rst 0x10
-rst 0x18
-rst 0x20
-rst 0x28
-rst 0x30
-rst 0x38
-rst 0x50
-rst 0x3
+﻿; Dummy boot page to get emulators to boot the OS
+    jr _
+    .fill $0F - $
+    .db "n.nn", 0
+_:
+#ifdef TI84p
+    in a, ($21)
+    res 0, a
+    out ($21), a
+#else
+    in a, ($21)
+    set 0, a
+    out ($21), a
+#endif
+    jp $4000
