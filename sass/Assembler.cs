@@ -147,6 +147,67 @@ namespace sass
                     }
                 }
 
+                // Find same-line labels
+                if (CurrentLine.Contains(":"))
+                {
+                    int length = 0;
+                    bool isLabel = true;
+                    for (int j = 0; j < CurrentLine.Length; j++)
+                    {
+                        if (char.IsLetterOrDigit(CurrentLine[j]) || CurrentLine[j] == '_')
+                            length++;
+                        else if (CurrentLine[j] == ':')
+                            break;
+                        else
+                        {
+                            isLabel = false;
+                            break;
+                        }
+                    }
+                    if (isLabel)
+                    {
+                        var label = CurrentLine.Remove(length).ToLower();
+                        label = label.ToLower();
+                        if (label == "_")
+                        {
+                            // Relative
+                            ExpressionEngine.RelativeLabels.Add(new RelativeLabel
+                            {
+                                Address = PC,
+                                RootLineNumber = RootLineNumber
+                            });
+                            AddOutput(CodeType.Label);
+                        }
+                        else
+                        {
+                            bool local = label.StartsWith(".");
+                            if (local)
+                                label = label.Substring(1) + "@" + ExpressionEngine.LastGlobalLabel;
+                            bool valid = true;
+                            for (int k = 0; k < label.Length; k++) // Validate label
+                            {
+                                if (!char.IsLetterOrDigit(label[k]) && label[k] != '_')
+                                {
+                                    if (local && label[k] == '@')
+                                        continue;
+                                    valid = false;
+                                    break;
+                                }
+                            }
+                            if (!valid)
+                                AddError(CodeType.Label, AssemblyError.InvalidLabel);
+                            else
+                            {
+                                AddOutput(CodeType.Label);
+                                ExpressionEngine.Symbols.Add(label.ToLower(), new Symbol(PC, true));
+                                if (!local)
+                                    ExpressionEngine.LastGlobalLabel = label.ToLower();
+                            }
+                        }
+                        CurrentLine = CurrentLine.Substring(length + 1).Trim();
+                    }
+                }
+
                 if (CurrentLine.StartsWith(":") || CurrentLine.EndsWith(":")) // Label
                 {
                     string label;
