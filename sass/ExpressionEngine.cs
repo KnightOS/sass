@@ -55,8 +55,6 @@ namespace sass
                         break;
                     }
                 }
-                if (offset < 0)
-                    offset++;
                 if (relative)
                 {
                     int i;
