@@ -41,7 +41,7 @@ namespace sass
             Listing = true;
         }
 
-        readonly string[] closingIfDirectives = new[] { "endif", "else", "elif", "elseif" };
+        readonly string[] ifDirectives = new[] { "endif", "else", "elif", "elseif", "ifdef", "ifndef", "if" };
 
         public AssemblyOutput Assemble(string assembly, string fileName = null)
         {
@@ -70,13 +70,16 @@ namespace sass
                     bool match = false;
                     if (CurrentLine.StartsWith("#") || CurrentLine.StartsWith("."))
                     {
-                        if (closingIfDirectives.Contains(CurrentLine.Substring(1).ToLower()))
+                        var directive = CurrentLine.Substring(1);
+                        if (CurrentLine.Contains((' ')))
+                            directive = directive.Remove(CurrentLine.IndexOf((' '))).Trim();
+                        if (ifDirectives.Contains(directive.ToLower()))
                             match = true;
                     }
                     if (!match)
                         continue;
                 }
-                if (!Listing)
+                if (!Listing) // TODO: .nolist is not handled correctly
                 {
                     if (CurrentLine.StartsWith("#") || CurrentLine.StartsWith("."))
                     {
@@ -711,6 +714,11 @@ namespace sass
                             listing.Error = AssemblyError.InvalidDirective;
                             return listing;
                         }
+                        if (!IfStack.Peek())
+                        {
+                            IfStack.Push(false);
+                            return listing;
+                        }
                         try
                         {
                             IfStack.Push(ExpressionEngine.Evaluate(parameter, PC, RootLineNumber) != 0);
@@ -731,6 +739,11 @@ namespace sass
                                 listing.Error = AssemblyError.InvalidDirective;
                                 return listing;
                             }
+                            if (!IfStack.Peek())
+                            {
+                                IfStack.Push(false);
+                                return listing;
+                            }
                             var result = ExpressionEngine.Symbols.ContainsKey(parameters[0].ToLower());
                             if (!result)
                                 result = Macros.Any(m => m.Name.ToLower() == parameters[0].ToLower());
@@ -742,6 +755,11 @@ namespace sass
                             if (parameters.Length != 1)
                             {
                                 listing.Error = AssemblyError.InvalidDirective;
+                                return listing;
+                            }
+                            if (!IfStack.Peek())
+                            {
+                                IfStack.Push(false);
                                 return listing;
                             }
                             var result = ExpressionEngine.Symbols.ContainsKey(parameters[0].ToLower());
