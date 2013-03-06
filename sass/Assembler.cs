@@ -311,7 +311,7 @@ namespace sass
                         }
                         macro.Code = macro.Code.Remove(macro.Code.Length - Environment.NewLine.Length);
                         macro.Name = macro.Name.ToLower();
-                        if (Macros.Any(m => m.Name == macro.Name))
+                        if (Macros.Any(m => m.Name == macro.Name && m.Parameters.Length == macro.Parameters.Length))
                         {
                             AddError(CodeType.Label, AssemblyError.DuplicateName);
                             continue;
@@ -720,7 +720,7 @@ namespace sass
                                 macro.Code = parameter.Substring(parameter.SafeIndexOf(' ') + 1).Trim();
                             }
                             macro.Name = macro.Name.ToLower();
-                            if (Macros.Any(m => m.Name == macro.Name))
+                            if (Macros.Any(m => m.Name == macro.Name && m.Parameters.Length == macro.Parameters.Length))
                             {
                                 listing.Error = AssemblyError.DuplicateName;
                                 return listing;
