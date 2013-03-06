@@ -149,6 +149,25 @@ namespace sass
                             RelativeToPC = true
                         });
                     }
+                    else if (instruction.Match[i] == '&') // RST immediate value
+                    {
+                        char key = instruction.Match[++i];
+                        i++;
+                        // Get value
+                        string value = GetOperandValue(instruction, i, code, j);
+                        if (value == null)
+                        {
+                            match = false;
+                            break;
+                        }
+                        j += value.Length - 1;
+                        result.ImmediateValues.Add(key, new ImmediateValue
+                        {
+                            Bits = 8,
+                            Value = value,
+                            RstOnly = true
+                        });
+                    }
                     else if (instruction.Match[i] == '@')
                     {
                         char key = instruction.Match[++i]; i += 2;

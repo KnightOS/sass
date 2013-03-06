@@ -433,6 +433,18 @@ namespace sass
                                     entry.Address -
                                     (ExpressionEngine.Evaluate(value.Value.Value, entry.Address, entry.RootLineNumber) + entry.Instruction.Length),
                                     value.Value.Bits, out truncated));
+                            else if (value.Value.RstOnly)
+                            {
+                                truncated = false;
+                                var rst = (byte)ExpressionEngine.Evaluate(value.Value.Value, entry.Address, entry.RootLineNumber);
+                                if ((rst & ~0x7) != rst || rst > 0x38)
+                                    entry.Error = AssemblyError.InvalidExpression;
+                                else
+                                {
+                                    instruction = instruction.Replace("&" + value.Key,
+                                        ConvertToBinary((ulong)rst >> 3, 3, out truncated));
+                                }
+                            }
                             else
                                 instruction = instruction.Replace("%" + value.Key, ConvertToBinary(
                                     ExpressionEngine.Evaluate(value.Value.Value, entry.Address, entry.RootLineNumber),
