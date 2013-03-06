@@ -62,7 +62,6 @@ namespace sass
                         if (RelativeLabels[i].RootLineNumber > rootLineNumber)
                             break;
                     }
-                    i--;
                     i += offset;
                     if (i < 0 || i >= RelativeLabels.Count)
                         throw new KeyNotFoundException("Relative label not found.");

@@ -50,7 +50,7 @@ namespace sass
             assembly = assembly.Replace("\r", "");
             PC = 0;
             Lines = assembly.Split('\n');
-            FileNames.Push(fileName);
+            FileNames.Push(Path.GetFileName(fileName));
             LineNumbers.Push(0);
             RootLineNumber = 0;
             IfStack.Push(true);
@@ -624,7 +624,7 @@ namespace sass
                                 listing.Error = AssemblyError.FileNotFound;
                                 return listing;
                             }
-                            FileNames.Push(parameter.Substring(1, parameter.Length - 2));
+                            FileNames.Push(Path.GetFileName(parameter.Substring(1, parameter.Length - 2)));
                             LineNumbers.Push(0);
                             string includedFile = File.ReadAllText(file) + "\n.endfile";
                             string[] lines = includedFile.Replace("\r", "").Split('\n');
