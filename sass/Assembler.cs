@@ -126,7 +126,7 @@ namespace sass
                         var code = macroMatch.Code;
                         int index = 0;
                         foreach (var parameter in macroMatch.Parameters)
-                            code = code.Replace(parameter, parameters[index++].Trim());
+                            code = code.Replace(parameter.Trim(), parameters[index++].Trim());
                         string newLine;
                         if (parameterDefinition != null)
                             newLine = CurrentLine.Replace(macroMatch.Name + "(" + parameterDefinition + ")", code);
