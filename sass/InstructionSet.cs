@@ -57,7 +57,6 @@ namespace sass
 
         public Instruction Match(string code)
         {
-            code = code.ToLower();
             var result = new Instruction();
             foreach (var instruction in Instructions)
             {
@@ -193,7 +192,7 @@ namespace sass
                     }
                     else
                     {
-                        if (instruction.Match[i] != code[j])
+                        if (instruction.Match[i] != char.ToLower(code[j]))
                         {
                             match = false;
                             break;
