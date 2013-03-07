@@ -429,7 +429,7 @@ namespace sass
                             if (value.Value.RelativeToPC)
                                 instruction = instruction.Replace("^" + value.Key, ConvertToBinary(
                                     entry.Address -
-                                    (ExpressionEngine.Evaluate(value.Value.Value, entry.Address, entry.RootLineNumber) + entry.Instruction.Length),
+                                    (ExpressionEngine.Evaluate(value.Value.Value, entry.Address, entry.RootLineNumber) - entry.Instruction.Length),
                                     value.Value.Bits, out truncated));
                             else if (value.Value.RstOnly)
                             {
