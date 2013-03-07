@@ -15,8 +15,6 @@ namespace sass
 
         public static int Main(string[] args)
         {
-            Console.WriteLine("SirCmpwn's Assembler     Copyright Drew DeVault 2013");
-
             InstructionSets = new Dictionary<string, InstructionSet>();
             InstructionSets.Add("z80", LoadInternalSet("sass.Tables.z80.table"));
             string instructionSet = "z80"; // Default
