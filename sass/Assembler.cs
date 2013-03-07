@@ -858,6 +858,9 @@ namespace sass
                     case "nolist":
                         Listing = false;
                         return listing;
+                    case "list":
+                        Listing = true;
+                        return listing;
                 }
             }
             catch (KeyNotFoundException)
