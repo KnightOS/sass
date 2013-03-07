@@ -798,6 +798,8 @@ namespace sass
                             listing.Error = AssemblyError.InvalidDirective;
                             return listing;
                         }
+                        if (!IfStack.Peek())
+                            return listing;
                         IfStack.Push(!IfStack.Pop());
                         return listing;
                         //case "elif": // TODO: Requires major logic changes
