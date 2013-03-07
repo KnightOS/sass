@@ -95,10 +95,10 @@ namespace sass
                     string parameterDefinition = null;
                     foreach (var macro in Macros)
                     {
-                        if (CurrentLine.SafeContains(macro.Name))
+                        if (CurrentLine.ToLower().SafeContains(macro.Name))
                         {
                             // Try to match
-                            int startIndex = CurrentLine.SafeIndexOf(macro.Name);
+                            int startIndex = CurrentLine.ToLower().SafeIndexOf(macro.Name);
                             int endIndex = startIndex + macro.Name.Length - 1;
                             if (macro.Parameters.Length != 0)
                             {
@@ -131,7 +131,7 @@ namespace sass
                         if (parameterDefinition != null)
                             newLine = CurrentLine.Replace(macroMatch.Name + "(" + parameterDefinition + ")", code);
                         else
-                            newLine = CurrentLine.Replace(macroMatch.Name, code);
+                            newLine = CurrentLine.ToLower().Replace(macroMatch.Name, code, StringComparison.InvariantCultureIgnoreCase);
                         var newLines = newLine.Replace("\r\n", "\n").Split('\n');
                         SuspendedLines += newLines.Length;
                         // Insert macro

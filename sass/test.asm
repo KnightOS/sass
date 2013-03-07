@@ -1,2 +1,2 @@
-﻿#define lang_more "More"
-.db lang_more, 0
+﻿#define lang_addToCastle "Add to Castle"
+.db lang_addToCastle, 0
