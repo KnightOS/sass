@@ -710,7 +710,7 @@ namespace sass
                                     // TODO: Consider enforcing character usage restrictions
                                 macro.Code = parameter.Substring(parameter.SafeIndexOf(' ') + 1).Trim();
                             }
-                            macro.Name = macro.Name.ToLower();
+                            macro.Name = macro.Name.ToLower().Trim();
                             if (Macros.Any(m => m.Name == macro.Name && m.Parameters.Length == macro.Parameters.Length))
                             {
                                 listing.Error = AssemblyError.DuplicateName;

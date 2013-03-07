@@ -1,5 +1,2 @@
-﻿.macro foo(from, to)
-    ld from, to
-.endmacro
-
-foo(hl, (0000))
+﻿#define lang_more "More"
+.db lang_more, 0
