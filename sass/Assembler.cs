@@ -79,18 +79,6 @@ namespace sass
                     if (!match)
                         continue;
                 }
-                if (!Listing) // TODO: .nolist is not handled correctly
-                {
-                    if (CurrentLine.StartsWith("#") || CurrentLine.StartsWith("."))
-                    {
-                        if (CurrentLine.Substring(1).ToLower() == "list")
-                        {
-                            AddOutput(CodeType.Directive);
-                            Listing = true;
-                        }
-                    }
-                    continue;
-                }
 
                 if (CurrentLine.SafeContains(".equ") && !CurrentLine.StartsWith(".equ"))
                 {
@@ -100,6 +88,7 @@ namespace sass
                 }
 
                 // Check for macro
+                if (!CurrentLine.StartsWith(".macro") && !CurrentLine.StartsWith("#macro"))
                 {
                     Macro macroMatch = null;
                     string[] parameters = null;
@@ -113,6 +102,8 @@ namespace sass
                             int endIndex = startIndex + macro.Name.Length - 1;
                             if (macro.Parameters.Length != 0)
                             {
+                                if (endIndex + 1 >= CurrentLine.Length)
+                                    continue;
                                 if (CurrentLine.Length < endIndex + 1 || CurrentLine[endIndex + 1] != '(')
                                     continue;
                                 if (macroMatch != null && macro.Name.Length < macroMatch.Name.Length)
@@ -340,7 +331,7 @@ namespace sass
                 }
                 else
                 {
-                    if (string.IsNullOrEmpty(CurrentLine))
+                    if (string.IsNullOrEmpty(CurrentLine) || !Listing)
                         continue;
                     // Check instructions
                     var match = InstructionSet.Match(CurrentLine);
