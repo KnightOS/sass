@@ -18,8 +18,8 @@ namespace sass
             {
                 new[] { "*", "/", "%" },
                 new[] { "+", "-" },
-                new[] { "<<", ">>" },
                 new[] { "<", "<=", ">", ">=" },
+                new[] { "<<", ">>" },
                 new[] { "==", "!=" },
                 new[] { "&" },
                 new[] { "^" },
@@ -255,7 +255,7 @@ namespace sass
 
         private string[] SplitExpression(string expression)
         {
-            for (int i = 0; i < Operators.Length; i++)
+            for (int i = Operators.Length - 1; i >= 0; i--)
             {
                 for (int j = 0; j < Operators[i].Length; j++)
                 {

@@ -1,6 +1,2 @@
-﻿.macro kld(to, from)
-    rst $08
-    ld to, from
-.endmacro
-
-kld((totalThreads), a)
+﻿.equ lang_forceQuit_position 61 * 256 + 50
+ld e, 55 - (61 - (lang_forceQuit_position >> 8))
