@@ -123,6 +123,8 @@ namespace sass
                     inString = !inString;
                 if (value[i] == '\'' && !inString)
                     inChar = !inChar;
+                if (value[i] == '\\' && (inString || inChar))
+                    i++;
             }
             return false;
         }
