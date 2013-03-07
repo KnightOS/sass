@@ -108,7 +108,7 @@ namespace sass
                                     continue;
                                 if (macroMatch != null && macro.Name.Length < macroMatch.Name.Length)
                                     continue;
-                                parameterDefinition = CurrentLine.Substring(endIndex + 2, CurrentLine.SafeIndexOf(')') - (endIndex + 2));
+                                parameterDefinition = CurrentLine.Substring(endIndex + 2, CurrentLine.LastIndexOf(')') - (endIndex + 2));
                                 parameters = parameterDefinition.SafeSplit(',');
                                 if (parameters.Length != macro.Parameters.Length)
                                     continue;
