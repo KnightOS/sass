@@ -41,14 +41,19 @@ namespace sass
             // Check for relative labels (special case, because they're bloody annoying to parse)
             if (expression.EndsWith("_"))
             {
-                bool relative = true;
+                bool relative = true, firstPlus = false;
                 int offset = 0;
                 for (int i = 0; i < expression.Length - 1; i++)
                 {
                     if (expression[i] == '-')
                         offset--;
                     else if (expression[i] == '+')
-                        offset++;
+                    {
+                        if (firstPlus)
+                            offset++;
+                        else
+                            firstPlus = true;
+                    }
                     else
                     {
                         relative = false;

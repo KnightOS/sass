@@ -21,7 +21,7 @@ namespace sass
 
         public override string ToString()
         {
-            return Match.Replace("_", " ").Replace("-", "");
+            return Match;
         }
 
         internal string Match { get; set; }
