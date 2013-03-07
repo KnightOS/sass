@@ -1,5 +1,11 @@
-﻿jr _
-    .fill $0F - $
-    .db "n.nn", 0
-_:
-    in a, ($21)
+﻿.define USB
+
+#ifdef USB
+    ld a, 10
+#else
+    #ifdef notdefined
+        ld a, 20
+    #else
+        ld a, 30
+    #endif
+#endif
