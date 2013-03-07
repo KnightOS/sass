@@ -210,7 +210,7 @@ namespace sass
                             symbol = symbol.Substring(1) + "@" + LastGlobalLabel;
                         if (Symbols.ContainsKey(symbol))
                             return Symbols[symbol].Value;
-                        throw new KeyNotFoundException("The given equate was not found.");
+                        throw new KeyNotFoundException("The specified symbol was not found.");
                     }
                 }
             }

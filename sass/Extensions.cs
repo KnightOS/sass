@@ -157,28 +157,30 @@ namespace sass
             string[] result = new string[1];
             result[0] = "";
             bool inString = false, inChar = false;
-            foreach (char c in value)
+            for (int i = 0; i < value.Length; i++)
             {
                 bool foundChar = false;
                 if (!inString && !inChar)
                 {
                     foreach (char haystack in characters)
                     {
-                        if (c == haystack)
+                        if (value[i] == haystack)
                         {
                             foundChar = true;
-                            result = result.Concat(new string[] { "" }).ToArray();
+                            result = result.Concat(new [] { "" }).ToArray();
                             break;
                         }
                     }
                 }
                 if (!foundChar)
                 {
-                    result[result.Length - 1] += c;
-                    if (c == '"' && !inChar)
+                    result[result.Length - 1] += value[i];
+                    if (value[i] == '"' && !inChar)
                         inString = !inString;
-                    if (c == '\'' && !inString)
+                    if (value[i] == '\'' && !inString)
                         inChar = !inChar;
+                    if (value[i] == '\\')
+                        result[result.Length - 1] += value[++i];
                 }
             }
             return result;
