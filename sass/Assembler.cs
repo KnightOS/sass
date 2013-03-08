@@ -22,6 +22,7 @@ namespace sass
         private Stack<int> LineNumbers { get; set; }
         private Stack<string> FileNames { get; set; }
         private Stack<bool> IfStack { get; set; }
+        private Stack<bool> WorkingIfStack { get; set; }
         private int SuspendedLines { get; set; }
         private int CurrentIndex { get; set; }
         private string CurrentLine { get; set; }
@@ -38,6 +39,7 @@ namespace sass
             IncludePaths = new List<string>();
             Macros = new List<Macro>();
             IfStack = new Stack<bool>();
+            WorkingIfStack = new Stack<bool>();
             Listing = true;
         }
 
@@ -727,7 +729,7 @@ namespace sass
                         }
                         if (!IfStack.Peek())
                         {
-                            IfStack.Push(false);
+                            WorkingIfStack.Push(false);
                             return listing;
                         }
                         try
@@ -752,7 +754,7 @@ namespace sass
                             }
                             if (!IfStack.Peek())
                             {
-                                IfStack.Push(false);
+                                WorkingIfStack.Push(false);
                                 return listing;
                             }
                             var result = ExpressionEngine.Symbols.ContainsKey(parameters[0].ToLower());
@@ -770,7 +772,7 @@ namespace sass
                             }
                             if (!IfStack.Peek())
                             {
-                                IfStack.Push(false);
+                                WorkingIfStack.Push(false);
                                 return listing;
                             }
                             var result = ExpressionEngine.Symbols.ContainsKey(parameters[0].ToLower());
@@ -790,6 +792,11 @@ namespace sass
                             listing.Error = AssemblyError.UncoupledStatement;
                             return listing;
                         }
+                        if (WorkingIfStack.Any())
+                        {
+                            WorkingIfStack.Pop();
+                            return listing;
+                        }
                         IfStack.Pop();
                         return listing;
                     case "else":
@@ -798,7 +805,7 @@ namespace sass
                             listing.Error = AssemblyError.InvalidDirective;
                             return listing;
                         }
-                        if (!IfStack.Peek())
+                        if (WorkingIfStack.Any())
                             return listing;
                         IfStack.Push(!IfStack.Pop());
                         return listing;
