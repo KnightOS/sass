@@ -413,7 +413,7 @@ namespace sass
                     continue;
                 if (entry.CodeType == CodeType.Label)
                 {
-                    var name = entry.Code.Trim(':');
+                    var name = entry.Code.Remove(entry.Code.IndexOf(':')).Trim(':').ToLower();
                     if (!name.StartsWith(".") && name != "_")
                         ExpressionEngine.LastGlobalLabel = name;
                 }
