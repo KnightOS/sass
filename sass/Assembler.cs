@@ -414,7 +414,7 @@ namespace sass
                 if (entry.CodeType == CodeType.Label)
                 {
                     var name = entry.Code.Trim(':');
-                    if (!name.StartsWith("."))
+                    if (!name.StartsWith(".") && name != "_")
                         ExpressionEngine.LastGlobalLabel = name;
                 }
                 else if (entry.CodeType == CodeType.Instruction)
