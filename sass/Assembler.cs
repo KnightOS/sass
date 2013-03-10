@@ -602,17 +602,25 @@ namespace sass
                     case "error":
                     case "echo":
                         {
-                            string output = "";
-                            foreach (var item in parameters)
+                            if (passTwo)
                             {
-                                if (item.Trim().StartsWith("\"") && item.EndsWith("\""))
-                                    output += item.Substring(1, item.Length - 2);
-                                else
-                                    output += ExpressionEngine.Evaluate(item, PC, RootLineNumber);
+                                string output = "";
+                                foreach (var item in parameters)
+                                {
+                                    if (item.Trim().StartsWith("\"") && item.EndsWith("\""))
+                                        output += item.Substring(1, item.Length - 2);
+                                    else
+                                        output += ExpressionEngine.Evaluate(item, PC, RootLineNumber);
+                                }
+                                Console.WriteLine((directive == "error" ? "User Error: " : "") + output);
                             }
-                            Console.WriteLine((directive == "error" ? "User Error: " : "") + output);
-                            return listing;
+                            else
+                            {
+                                listing.PostponeEvalulation = true;
+                                return listing;
+                            }
                         }
+                        break;
                     case "end":
                         return listing;
                     case "fill":
