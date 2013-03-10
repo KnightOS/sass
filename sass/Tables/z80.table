@@ -231,11 +231,11 @@ INS SBC_A-,-(-@A<g8>-+-%B<8>-)          @A 10011110 %B
 
 INS SUB_A-,-@A<g3>                      10010@A
     INS SUB_@A<g3>                      10010@A
-INS SUB_A-,-%A<8>                       11010110 %A
-    INS SUB_%A<8>                       11010110 %A
 INS SUB_A-,-(-@A<g8>-+-%B<8>-)          @A 10010110 %B
     INS SUB_A-,-(-%B<8>-+-@A<g8>-)      @A 10010110 %B
     INS SUB_A-,-(-@A<g8>-)              @A 10010110 00000000
+INS SUB_A-,-%A<8>                       11010110 %A
+    INS SUB_%A<8>                       11010110 %A
 
 #### BIT MANIPULATION
 
