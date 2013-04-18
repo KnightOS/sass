@@ -613,6 +613,7 @@ namespace sass
                                         output += ExpressionEngine.Evaluate(item, PC, RootLineNumber);
                                 }
                                 Console.WriteLine((directive == "error" ? "User Error: " : "") + output);
+                                return listing;
                             }
                             else
                             {
