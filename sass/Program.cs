@@ -79,6 +79,9 @@ namespace sass
                                     Console.WriteLine("{0} [{1}]", encoding.DisplayName, encoding.Name);
                                 Console.WriteLine("Use the identifier (in [brackets]) with --encoding).");
                                 return 0;
+                            case "--nest-macros":
+                                settings.AllowNestedMacros = true;
+                                break;
                             case "--output":
                             case "--output-file":
                                 outputFile = args[++i];

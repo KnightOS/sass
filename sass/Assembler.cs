@@ -56,6 +56,7 @@ namespace sass
             LineNumbers.Push(0);
             RootLineNumber = 0;
             IfStack.Push(true);
+            bool suspendMacros = false;
             for (CurrentIndex = 0; CurrentIndex < Lines.Length; CurrentIndex++)
             {
                 CurrentLine = Lines[CurrentIndex].Trim().TrimComments();
@@ -63,9 +64,15 @@ namespace sass
                 {
                     LineNumbers.Push(LineNumbers.Pop() + 1);
                     RootLineNumber++;
+                    suspendMacros = false;
                 }
                 else
+                {
                     SuspendedLines--;
+                    suspendMacros = true;
+                }
+                if (Settings.AllowNestedMacros)
+                    suspendMacros = false;
 
                 if (!IfStack.Peek())
                 {
@@ -82,15 +89,8 @@ namespace sass
                         continue;
                 }
 
-                if (CurrentLine.SafeContains(".equ") && !CurrentLine.StartsWith(".equ"))
-                {
-                    var name = CurrentLine.Remove(CurrentLine.SafeIndexOf(".equ"));
-                    var definition = CurrentLine.Substring(CurrentLine.SafeIndexOf(".equ") + 4);
-                    CurrentLine = ".equ " + name.Trim() + " " + definition.Trim();
-                }
-
                 // Check for macro
-                if (!CurrentLine.StartsWith(".macro") && !CurrentLine.StartsWith("#macro"))
+                if (!CurrentLine.StartsWith(".macro") && !CurrentLine.StartsWith("#macro") && !suspendMacros)
                 {
                     Macro macroMatch = null;
                     string[] parameters = null;
@@ -141,6 +141,13 @@ namespace sass
                         CurrentIndex--;
                         continue;
                     }
+                }
+
+                if (CurrentLine.SafeContains(".equ") && !CurrentLine.StartsWith(".") && !CurrentLine.StartsWith("#"))
+                {
+                    var name = CurrentLine.Remove(CurrentLine.SafeIndexOf(".equ"));
+                    var definition = CurrentLine.Substring(CurrentLine.SafeIndexOf(".equ") + 4);
+                    CurrentLine = ".equ " + name.Trim() + " " + definition.Trim();
                 }
 
                 // Find same-line labels
@@ -255,7 +262,7 @@ namespace sass
                     continue;
                 }
 
-                if (CurrentLine.SafeContains('\\'))
+                if (CurrentLine.SafeContains('\\') && !CurrentLine.StartsWith("#") && !CurrentLine.StartsWith("."))
                 {
                     // Split lines up
                     var split = CurrentLine.SafeSplit('\\');

@@ -177,11 +177,14 @@ namespace sass
                     return PC;
                 else if (expression.StartsWith("0x")) // Hex
                     return Convert.ToUInt64(expression.Substring(2), 16);
-                else if (expression.StartsWith("$") || (expression.EndsWith("h") && 
+                else if (expression.StartsWith("$") || (expression.EndsWith("h") &&
                     expression.Remove(expression.Length - 1).ToLower().Count(c => !"0123456789abcdef".Contains(c)) == 0))
                     return Convert.ToUInt64(expression.Trim('$', 'h'), 16);
                 else if (expression.StartsWith("0b")) // Binary
                     return Convert.ToUInt64(expression.Substring(2), 2);
+                else if (expression.StartsWith("%") || (expression.EndsWith("b") &&
+                    expression.Remove(expression.Length - 1).ToLower().Count(c => !"0123456789abcdef".Contains(c)) == 0))
+                    return Convert.ToUInt64(expression.Trim('%', 'b'), 2);
                 else if (expression.StartsWith("$") || (expression.EndsWith("h") &&
                     expression.Remove(expression.Length - 1).ToLower().Count(c => !"01".Contains(c)) == 0))
                     return Convert.ToUInt64(expression.Trim('%', 'b'), 2);
