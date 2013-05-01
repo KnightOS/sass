@@ -133,7 +133,12 @@ namespace sass
                         if (parameterDefinition != null)
                             newLine = CurrentLine.Replace(macroMatch.Name + "(" + parameterDefinition + ")", code);
                         else
-                            newLine = CurrentLine.ToLower().Replace(macroMatch.Name, code, StringComparison.InvariantCultureIgnoreCase);
+                        {
+                            if (CurrentLine.Substring(CurrentLine.ToLower().IndexOf(macroMatch.Name) + macroMatch.Name.Length).StartsWith("()"))
+                                newLine = CurrentLine.Replace(macroMatch.Name + "()", code);
+                            else
+                                newLine = CurrentLine.ToLower().Replace(macroMatch.Name, code, StringComparison.InvariantCultureIgnoreCase);
+                        }
                         var newLines = newLine.Replace("\r\n", "\n").Split('\n');
                         SuspendedLines += newLines.Length;
                         // Insert macro
