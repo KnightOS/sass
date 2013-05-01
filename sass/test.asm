@@ -3,3 +3,4 @@
 	ret
 .endmacro
 	pass()
+.undefine pass

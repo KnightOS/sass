@@ -90,7 +90,7 @@ namespace sass
                 }
 
                 // Check for macro
-                if (!CurrentLine.StartsWith(".macro") && !CurrentLine.StartsWith("#macro"))
+                if (!CurrentLine.StartsWith(".macro") && !CurrentLine.StartsWith("#macro") && !CurrentLine.StartsWith(".undefine") && !CurrentLine.StartsWith("#undefine"))
                 {
                     Macro macroMatch = null;
                     string[] parameters = null;
