@@ -15,7 +15,7 @@ namespace sass
             IncludePath = new string[0];
             SymbolOutput = null;
             Encoding = Encoding.UTF8;
-            AllowNestedMacros = false;
+            AllowNestedMacros = true;
         }
 
         public bool Verbose { get; set; }

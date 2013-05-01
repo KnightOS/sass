@@ -36,7 +36,7 @@ namespace sass
                                 defines.AddRange(args[++i].Split(','));
                                 break;
                             case "--debug-mode":
-                                Thread.Sleep(5000);
+                                Console.ReadKey(true);
                                 break;
                             case "--encoding":
                                 try

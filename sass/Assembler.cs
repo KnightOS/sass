@@ -56,7 +56,6 @@ namespace sass
             LineNumbers.Push(0);
             RootLineNumber = 0;
             IfStack.Push(true);
-            bool suspendMacros = false;
             for (CurrentIndex = 0; CurrentIndex < Lines.Length; CurrentIndex++)
             {
                 CurrentLine = Lines[CurrentIndex].Trim().TrimComments();
@@ -64,15 +63,9 @@ namespace sass
                 {
                     LineNumbers.Push(LineNumbers.Pop() + 1);
                     RootLineNumber++;
-                    suspendMacros = false;
                 }
                 else
-                {
                     SuspendedLines--;
-                    suspendMacros = true;
-                }
-                if (Settings.AllowNestedMacros)
-                    suspendMacros = false;
 
                 if (!IfStack.Peek())
                 {
@@ -89,8 +82,15 @@ namespace sass
                         continue;
                 }
 
+                if (CurrentLine.SafeContains(".equ") && !CurrentLine.StartsWith(".equ"))
+                {
+                    var name = CurrentLine.Remove(CurrentLine.SafeIndexOf(".equ"));
+                    var definition = CurrentLine.Substring(CurrentLine.SafeIndexOf(".equ") + 4);
+                    CurrentLine = ".equ " + name.Trim() + " " + definition.Trim();
+                }
+
                 // Check for macro
-                if (!CurrentLine.StartsWith(".macro") && !CurrentLine.StartsWith("#macro") && !suspendMacros)
+                if (!CurrentLine.StartsWith(".macro") && !CurrentLine.StartsWith("#macro"))
                 {
                     Macro macroMatch = null;
                     string[] parameters = null;
@@ -141,13 +141,6 @@ namespace sass
                         CurrentIndex--;
                         continue;
                     }
-                }
-
-                if (CurrentLine.SafeContains(".equ") && !CurrentLine.StartsWith(".") && !CurrentLine.StartsWith("#"))
-                {
-                    var name = CurrentLine.Remove(CurrentLine.SafeIndexOf(".equ"));
-                    var definition = CurrentLine.Substring(CurrentLine.SafeIndexOf(".equ") + 4);
-                    CurrentLine = ".equ " + name.Trim() + " " + definition.Trim();
                 }
 
                 // Find same-line labels
@@ -225,10 +218,10 @@ namespace sass
                     {
                         // Relative
                         ExpressionEngine.RelativeLabels.Add(new RelativeLabel
-                            {
-                                Address = PC,
-                                RootLineNumber = RootLineNumber
-                            });
+                        {
+                            Address = PC,
+                            RootLineNumber = RootLineNumber
+                        });
                         AddOutput(CodeType.Label);
                     }
                     else
@@ -262,7 +255,7 @@ namespace sass
                     continue;
                 }
 
-                if (CurrentLine.SafeContains('\\') && !CurrentLine.StartsWith("#") && !CurrentLine.StartsWith("."))
+                if (CurrentLine.SafeContains('\\'))
                 {
                     // Split lines up
                     var split = CurrentLine.SafeSplit('\\');
@@ -276,11 +269,11 @@ namespace sass
                 if (CurrentLine.StartsWith(".") || CurrentLine.StartsWith("#")) // Directive
                 {
                     // Some directives need to be handled higher up
-                    var directive = CurrentLine.Substring(1).Trim().ToLower();
+                    var directive = CurrentLine.Substring(1).Trim();
                     string[] parameters = new string[0];
                     if (directive.SafeIndexOf(' ') != -1)
                         parameters = directive.Substring(directive.SafeIndexOf(' ')).Trim().SafeSplit(' ');
-                    if (directive.StartsWith("macro"))
+                    if (directive.ToLower().StartsWith("macro"))
                     {
                         var definitionLine = CurrentLine; // Used to update the listing later
                         if (parameters.Length == 0)
@@ -296,10 +289,10 @@ namespace sass
                             parameterDefinition = parameterDefinition.Remove(parameterDefinition.SafeIndexOf(')'));
                             // NOTE: This probably introduces the ability to use ".macro foo(bar)this_doesnt_cause_errors"
                             macro.Parameters = parameterDefinition.SafeSplit(',');
-                            macro.Name = definition.Remove(definition.SafeIndexOf('('));
+                            macro.Name = definition.Remove(definition.SafeIndexOf('(')).ToLower();
                         }
                         else
-                            macro.Name = definition; // TODO: Consider enforcing character usage restrictions
+                            macro.Name = definition.ToLower(); // TODO: Consider enforcing character usage restrictions
                         for (CurrentIndex++; CurrentIndex < Lines.Length; CurrentIndex++)
                         {
                             CurrentLine = Lines[CurrentIndex].Trim().TrimComments();
@@ -725,7 +718,7 @@ namespace sass
                             else
                             {
                                 macro.Name = parameter.Remove(parameter.SafeIndexOf(' ') + 1);
-                                    // TODO: Consider enforcing character usage restrictions
+                                // TODO: Consider enforcing character usage restrictions
                                 macro.Code = parameter.Substring(parameter.SafeIndexOf(' ') + 1).Trim();
                             }
                             macro.Name = macro.Name.ToLower().Trim();
@@ -825,15 +818,15 @@ namespace sass
                             return listing;
                         IfStack.Push(!IfStack.Pop());
                         return listing;
-                        //case "elif": // TODO: Requires major logic changes
-                        //case "elseif":
-                        //    if (IfStack.Peek())
-                        //    {
-                        //        IfStack.Pop();
-                        //        IfStack.Push(false);
-                        //        return listing;
-                        //    }
-                        //    return listing;
+                    //case "elif": // TODO: Requires major logic changes
+                    //case "elseif":
+                    //    if (IfStack.Peek())
+                    //    {
+                    //        IfStack.Pop();
+                    //        IfStack.Push(false);
+                    //        return listing;
+                    //    }
+                    //    return listing;
                     case "ascii":
                         if (parameters.Length == 0)
                         {
@@ -861,7 +854,7 @@ namespace sass
                         }
                         parameter = parameter.Substring(1, parameter.Length - 2);
                         listing.Output =
-                            Settings.Encoding.GetBytes(parameter.Unescape()).Concat(new byte[] {0}).ToArray();
+                            Settings.Encoding.GetBytes(parameter.Unescape()).Concat(new byte[] { 0 }).ToArray();
                         return listing;
                     case "asciip":
                         if (parameters.Length == 0)
@@ -876,13 +869,32 @@ namespace sass
                         }
                         parameter = parameter.Substring(1, parameter.Length - 2);
                         listing.Output = Settings.Encoding.GetBytes(parameter.Unescape());
-                        listing.Output = new byte[] {(byte)parameter.Length}.Concat(listing.Output).ToArray();
+                        listing.Output = new byte[] { (byte)parameter.Length }.Concat(listing.Output).ToArray();
                         return listing;
                     case "nolist":
                         Listing = false;
                         return listing;
                     case "list":
                         Listing = true;
+                        return listing;
+                    case "undefine":
+                        if (parameters.Length == 0)
+                        {
+                            listing.Error = AssemblyError.InvalidDirective;
+                            return listing;
+                        }
+                        foreach (var item in parameters)
+                        {
+                            if (Macros.Any(m => m.Name == item.ToLower()))
+                                Macros.Remove(Macros.FirstOrDefault(m => m.Name == item));
+                            else if (ExpressionEngine.Symbols.ContainsKey(item.ToLower()))
+                                ExpressionEngine.Symbols.Remove(item.ToLower());
+                            else
+                            {
+                                listing.Error = AssemblyError.UnknownSymbol;
+                                return listing;
+                            }
+                        }
                         return listing;
                 }
             }
