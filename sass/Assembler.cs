@@ -135,9 +135,9 @@ namespace sass
                         else
                         {
                             if (CurrentLine.Substring(CurrentLine.ToLower().IndexOf(macroMatch.Name) + macroMatch.Name.Length).StartsWith("()"))
-                                newLine = CurrentLine.Replace(macroMatch.Name + "()", code);
+                                newLine = CurrentLine.Replace(macroMatch.Name + "()", code, StringComparison.InvariantCultureIgnoreCase);
                             else
-                                newLine = CurrentLine.ToLower().Replace(macroMatch.Name, code, StringComparison.InvariantCultureIgnoreCase);
+                                newLine = CurrentLine.Replace(macroMatch.Name, code, StringComparison.InvariantCultureIgnoreCase);
                         }
                         var newLines = newLine.Replace("\r\n", "\n").Split('\n');
                         SuspendedLines += newLines.Length;
