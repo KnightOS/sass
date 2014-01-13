@@ -131,7 +131,7 @@ namespace sass
                             code = code.Replace(parameter.Trim(), parameters[index++].Trim());
                         string newLine;
                         if (parameterDefinition != null)
-                            newLine = CurrentLine.Replace(macroMatch.Name + "(" + parameterDefinition + ")", code);
+                            newLine = CurrentLine.Replace(macroMatch.Name + "(" + parameterDefinition + ")", code, StringComparison.InvariantCultureIgnoreCase);
                         else
                         {
                             if (CurrentLine.Substring(CurrentLine.ToLower().IndexOf(macroMatch.Name) + macroMatch.Name.Length).StartsWith("()"))
