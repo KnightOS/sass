@@ -1,6 +1,10 @@
-﻿.macro fooBar(abc)
-    ld abc, 10
+﻿.macro foobar()
+    .echo "foobar"
+.endmacro
+.macro foobar(asdf)
+    .echo "foobar asdf"
 .endmacro
 
-fooBar(bc)
+foobar()
+foobar(bc)
 add a, 10

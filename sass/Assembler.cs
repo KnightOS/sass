@@ -293,7 +293,10 @@ namespace sass
                             var parameterDefinition = definition.Substring(definition.SafeIndexOf('(') + 1);
                             parameterDefinition = parameterDefinition.Remove(parameterDefinition.SafeIndexOf(')'));
                             // NOTE: This probably introduces the ability to use ".macro foo(bar)this_doesnt_cause_errors"
-                            macro.Parameters = parameterDefinition.SafeSplit(',');
+                            if (string.IsNullOrEmpty(parameterDefinition))
+                                macro.Parameters = new string[0];
+                            else
+                                macro.Parameters = parameterDefinition.SafeSplit(',');
                             macro.Name = definition.Remove(definition.SafeIndexOf('(')).ToLower();
                         }
                         else
