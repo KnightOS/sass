@@ -613,13 +613,27 @@ namespace sass
                             if (passTwo)
                             {
                                 string output = "";
+                                bool formatOutput = false;
+                                List<object> formatParameters = new List<object>();
                                 foreach (var item in parameters)
                                 {
                                     if (item.Trim().StartsWith("\"") && item.EndsWith("\""))
+                                    {
                                         output += item.Substring(1, item.Length - 2);
+                                        formatOutput = true;
+                                    }
                                     else
-                                        output += ExpressionEngine.Evaluate(item, PC, RootLineNumber);
+                                    {
+                                        if (!formatOutput)
+                                            output += ExpressionEngine.Evaluate(item, PC, RootLineNumber);
+                                        else
+                                        {
+                                            formatParameters.Add(ExpressionEngine.Evaluate(item, PC, RootLineNumber));
+                                        }
+                                    }
                                 }
+                                if (formatOutput)
+                                    output = string.Format(output, formatParameters.ToArray());
                                 Console.WriteLine((directive == "error" ? "User Error: " : "") + output);
                                 return listing;
                             }

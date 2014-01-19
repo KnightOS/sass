@@ -1,10 +1,17 @@
-﻿.macro foobar()
-    .echo "foobar"
-.endmacro
-.macro foobar(asdf)
-    .echo "foobar asdf"
+﻿.macro setBankA(page)
+    .if page & 0x80
+        .echo "high"
+        ld a, 1
+        out (0x0E), a
+        ld a, page & 0x7F
+        out (6), a
+    .else
+        .echo "low"
+        xor a
+        out (0x0E), a
+        ld a, page & 0x7F
+        out (6), a
+    .endif
 .endmacro
 
-foobar()
-foobar(bc)
-add a, 10
+setBankA(4)
