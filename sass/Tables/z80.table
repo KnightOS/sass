@@ -94,6 +94,128 @@ OPERAND g10 SP 11
 # pretty nice instruction set documentation.
 #### INSTRUCTIONS
 
+# Undocumented IX/IY(H,L) instructions come first for parsing reasons
+
+# IXH
+INS ADD_A-,-IXH                         11011101 10000100
+    INS ADD_IXH                         11011101 10000100
+
+INS AND_IXH                             11011101 10100100
+    INS AND_A-,-IXH                     11011101 10100100
+
+INS CP_IXH                              11011101 10111100
+    INS A-,-CP_IXH                      11011101 10111100
+
+INS DEC_IXH                             11011101 00100101
+
+INS INC_IXH                             11011101 00100100
+
+INS LD_@A<g3>-,-IXH                     11011101 01@A100
+INS LD_IXH-,-@A<g3>                     11011101 01100@A
+INS LD_IXH-,-%A<8>                      11011101 00100110 %A
+
+INS OR_IXH                              11011101 10110100
+    INS OR_A-,-IXH                      11011101 10110100
+
+INS SBC_A-,-IXH                         11011101 10011100
+    INS SBC_IXH                         11011101 10011100
+
+INS SUB_IXH                             11011101 10010100
+    INS SUB_A-,-IXH                     11011101 10010100
+
+INS XOR_IXH                             11011101 10101100
+    INS XOR_A-,-IXH                     11011101 10101100
+
+# IXL
+INS ADD_A-,-IXL                         11011101 10000101
+    INS ADD_IXL                         11011101 10000101
+
+INS AND_IXL                             11011101 10100101
+    INS AND_A-,-IXL                     11011101 10100101
+
+INS CP_IXL                              11011101 10111101
+    INS A-,-CP_IXL                      11011101 10111101
+
+INS DEC_IXL                             11011101 00101101
+
+INS INC_IXL                             11011101 00101100
+
+INS LD_@A<g3>-,-IXL                     11011101 01@A101
+INS LD_IXL-,-@A<g3>                     11011101 01101@A
+INS LD_IXL-,-%A<8>                      11011101 00101110 %A
+
+INS OR_IXL                              11011101 10110101
+    INS OR_A-,-IXL                      11011101 10110101
+
+INS SBC_A-,-IXL                         11011101 10011101
+    INS SBC_IXL                         11011101 10011101
+
+INS SUB_IXL                             11011101 10010101
+    INS SUB_A-,-IXL                     11011101 10010101
+
+INS XOR_IXL                             11011101 10101101
+    INS XOR_A-,-IXL                     11011101 10101101
+
+# IYH
+INS ADD_A-,-IYH                         11111101 10000100
+    INS ADD_IYH                         11111101 10000100
+
+INS AND_IYH                             11111101 10100100
+    INS AND_A-,-IYH                     11111101 10100100
+
+INS CP_IYH                              11111101 10111100
+    INS A-,-CP_IYH                      11111101 10111100
+
+INS DEC_IYH                             11111101 00100101
+
+INS INC_IYH                             11111101 00100100
+
+INS LD_@A<g3>-,-IYH                     11111101 01@A100
+INS LD_IYH-,-@A<g3>                     11111101 01100@A
+INS LD_IYH-,-%A<8>                      11111101 00100110 %A
+
+INS OR_IYH                              11111101 10110100
+    INS OR_A-,-IYH                      11111101 10110100
+
+INS SBC_A-,-IYH                         11111101 10011100
+    INS SBC_IYH                         11111101 10011100
+
+INS SUB_IYH                             11111101 10010100
+    INS SUB_A-,-IYH                     11111101 10010100
+
+INS XOR_IYH                             11111101 10101100
+    INS XOR_A-,-IYH                     11111101 10101100
+
+# IYL
+INS ADD_A-,-IYL                         11111101 10000101
+    INS ADD_IYL                         11111101 10000101
+
+INS AND_IYL                             11111101 10100101
+    INS AND_A-,-IYL                     11111101 10100101
+
+INS CP_IYL                              11111101 10111101
+    INS A-,-CP_IYL                      11111101 10111101
+
+INS DEC_IYL                             11111101 00101101
+
+INS INC_IYL                             11111101 00101100
+
+INS LD_@A<g3>-,-IYL                     11111101 01@A101
+INS LD_IYL-,-@A<g3>                     11111101 01101@A
+INS LD_IYL-,-%A<8>                      11111101 00101110 %A
+
+INS OR_IYL                              11111101 10110101
+    INS OR_A-,-IYL                      11111101 10110101
+
+INS SBC_A-,-IYL                         11111101 10011101
+    INS SBC_IYL                         11111101 10011101
+
+INS SUB_IYL                             11111101 10010101
+    INS SUB_A-,-IYL                     11111101 10010101
+
+INS XOR_IYL                             11111101 10101101
+    INS XOR_A-,-IYL                     11111101 10101101
+
 #### DATA MOVEMENT
 
 INS EX_DE-,-HL                          11101011
@@ -408,129 +530,7 @@ INS OUTD                                11101101 10101011
 
 INS OUTI                                11101101 10100011
 
-#### UNDOCUMENTED
-
 # HARDWARE
 INS IN_(-C-)                            11101101 01110000
     INS IN_F-,-(-C-)                    11101101 01110000
 INS OUT_(-C-)-,-0                       11101101 01110001
-
-# IXH
-INS ADD_A-,-IXH                         11011101 10000100
-    INS ADD_IXH                         11011101 10000100
-
-INS AND_IXH                             11011101 10100100
-    INS AND_A-,-IXH                     11011101 10100100
-
-INS CP_IXH                              11011101 10111100
-    INS A-,-CP_IXH                      11011101 10111100
-
-INS DEC_IXH                             11011101 00100101
-
-INS INC_IXH                             11011101 00100100
-
-INS LD_@A<g3>-,-IXH                     11011101 01@A100
-INS LD_IXH-,-@A<g3>                     11011101 01100@A
-INS LD_IXH-,-%A<8>                      11011101 00100110 %A
-
-INS OR_IXH                              11011101 10110100
-    INS OR_A-,-IXH                      11011101 10110100
-
-INS SBC_A-,-IXH                         11011101 10011100
-    INS SBC_IXH                         11011101 10011100
-
-INS SUB_IXH                             11011101 10010100
-    INS SUB_A-,-IXH                     11011101 10010100
-
-INS XOR_IXH                             11011101 10101100
-    INS XOR_A-,-IXH                     11011101 10101100
-
-# IXL
-INS ADD_A-,-IXL                         11011101 10000101
-    INS ADD_IXL                         11011101 10000101
-
-INS AND_IXL                             11011101 10100101
-    INS AND_A-,-IXL                     11011101 10100101
-
-INS CP_IXL                              11011101 10111101
-    INS A-,-CP_IXL                      11011101 10111101
-
-INS DEC_IXL                             11011101 00101101
-
-INS INC_IXL                             11011101 00101100
-
-INS LD_@A<g3>-,-IXL                     11011101 01@A101
-INS LD_IXL-,-@A<g3>                     11011101 01101@A
-INS LD_IXL-,-%A<8>                      11011101 00101110 %A
-
-INS OR_IXL                              11011101 10110101
-    INS OR_A-,-IXL                      11011101 10110101
-
-INS SBC_A-,-IXL                         11011101 10011101
-    INS SBC_IXL                         11011101 10011101
-
-INS SUB_IXL                             11011101 10010101
-    INS SUB_A-,-IXL                     11011101 10010101
-
-INS XOR_IXL                             11011101 10101101
-    INS XOR_A-,-IXL                     11011101 10101101
-
-# IYH
-INS ADD_A-,-IYH                         11111101 10000100
-    INS ADD_IYH                         11111101 10000100
-
-INS AND_IYH                             11111101 10100100
-    INS AND_A-,-IYH                     11111101 10100100
-
-INS CP_IYH                              11111101 10111100
-    INS A-,-CP_IYH                      11111101 10111100
-
-INS DEC_IYH                             11111101 00100101
-
-INS INC_IYH                             11111101 00100100
-
-INS LD_@A<g3>-,-IYH                     11111101 01@A100
-INS LD_IYH-,-@A<g3>                     11111101 01100@A
-INS LD_IYH-,-%A<8>                      11111101 00100110 %A
-
-INS OR_IYH                              11111101 10110100
-    INS OR_A-,-IYH                      11111101 10110100
-
-INS SBC_A-,-IYH                         11111101 10011100
-    INS SBC_IYH                         11111101 10011100
-
-INS SUB_IYH                             11111101 10010100
-    INS SUB_A-,-IYH                     11111101 10010100
-
-INS XOR_IYH                             11111101 10101100
-    INS XOR_A-,-IYH                     11111101 10101100
-
-# IYL
-INS ADD_A-,-IYL                         11111101 10000101
-    INS ADD_IYL                         11111101 10000101
-
-INS AND_IYL                             11111101 10100101
-    INS AND_A-,-IYL                     11111101 10100101
-
-INS CP_IYL                              11111101 10111101
-    INS A-,-CP_IYL                      11111101 10111101
-
-INS DEC_IYL                             11111101 00101101
-
-INS INC_IYL                             11111101 00101100
-
-INS LD_@A<g3>-,-IYL                     11111101 01@A101
-INS LD_IYL-,-@A<g3>                     11111101 01101@A
-INS LD_IYL-,-%A<8>                      11111101 00101110 %A
-
-INS OR_IYL                              11111101 10110101
-    INS OR_A-,-IYL                      11111101 10110101
-
-INS SBC_A-,-IYL                         11111101 10011101
-    INS SBC_IYL                         11111101 10011101
-
-INS SUB_IYL                             11111101 10010101
-    INS SUB_A-,-IYL                     11111101 10010101
-
-INS XOR_IYL                             11111101 10101101
-    INS XOR_A-,-IYL                     11111101 10101101
