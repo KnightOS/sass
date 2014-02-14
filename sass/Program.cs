@@ -25,7 +25,7 @@ namespace sass
             for (int i = 0; i < args.Length; i++)
             {
                 string arg = args[i];
-                if (arg.StartsWith("-"))
+                if (arg.StartsWith("-") && arg != "-")
                 {
                     try
                     {
@@ -45,7 +45,7 @@ namespace sass
                                 }
                                 catch
                                 {
-                                    Console.WriteLine("The specified encoding was not recognized. Use sass --list-encodings to see available encodings.");
+                                    Console.Error.WriteLine("The specified encoding was not recognized. Use sass --list-encodings to see available encodings.");
                                     return 1;
                                 }
                                 break;
@@ -98,7 +98,7 @@ namespace sass
                     }
                     catch (ArgumentOutOfRangeException)
                     {
-                        Console.WriteLine("Error: Invalid usage. Use sass.exe --help for usage information.");
+                        Console.Error.WriteLine("Error: Invalid usage. Use sass.exe --help for usage information.");
                         return 1;
                     }
                 }
@@ -110,7 +110,7 @@ namespace sass
                         outputFile = args[i];
                     else
                     {
-                        Console.WriteLine("Error: Invalid usage. Use sass.exe --help for usage information.");
+                        Console.Error.WriteLine("Error: Invalid usage. Use sass.exe --help for usage information.");
                         return 1;
                     }
                 }
@@ -118,7 +118,7 @@ namespace sass
 
             if (inputFile == null)
             {
-                Console.WriteLine("No input file specified. Use sass.exe --help for usage information.");
+                Console.Error.WriteLine("No input file specified. Use sass.exe --help for usage information.");
                 return 1;
             }
             if (outputFile == null)
@@ -131,7 +131,7 @@ namespace sass
                     selectedInstructionSet = InstructionSet.Load(File.ReadAllText(instructionSet));
                 else
                 {
-                    Console.WriteLine("Specified instruction set was not found.");
+                    Console.Error.WriteLine("Specified instruction set was not found.");
                     return 1;
                 }
             }
@@ -141,13 +141,20 @@ namespace sass
             var assembler = new Assembler(selectedInstructionSet, settings);
             foreach (var define in defines)
                 assembler.ExpressionEngine.Symbols.Add(define.ToLower(), new Symbol(1));
-            string file = File.ReadAllText(inputFile);
+            string file;
+            if (inputFile == "-")
+                file = Console.In.ReadToEnd();
+            else
+                file = File.ReadAllText(inputFile);
             var watch = new Stopwatch();
             watch.Start();
             var output = assembler.Assemble(file, inputFile);
             watch.Stop();
 
-            File.WriteAllBytes(outputFile, output.Data);
+            if (outputFile == "-")
+                Console.OpenStandardOutput().Write(output.Data, 0, output.Data.Length);
+            else
+                File.WriteAllBytes(outputFile, output.Data);
             var errors = from l in output.Listing
                          where l.Warning != AssemblyWarning.None || l.Error != AssemblyError.None
                          orderby l.RootLineNumber
@@ -157,9 +164,9 @@ namespace sass
                 foreach (var listing in errors)
                 {
                     if (listing.Error != AssemblyError.None)
-                        Console.WriteLine(listing.FileName + ":" + listing.LineNumber + " Error: " + listing.Error);
+                        Console.Error.WriteLine(listing.FileName + ":" + listing.LineNumber + " Error: " + listing.Error);
                     if (listing.Warning != AssemblyWarning.None)
-                        Console.WriteLine(listing.FileName + ":" + listing.LineNumber + " Warning: " + listing.Warning);
+                        Console.Error.WriteLine(listing.FileName + ":" + listing.LineNumber + " Warning: " + listing.Warning);
                 }
             }
 
@@ -175,10 +182,10 @@ namespace sass
             if (settings.SymbolOutput != null)
                 WriteSymbols(settings.SymbolOutput, assembler);
 
-            Console.WriteLine("Assembly done: {0} ms", watch.ElapsedMilliseconds);
+            Console.Error.WriteLine("Assembly done: {0} ms", watch.ElapsedMilliseconds);
             if (Debugger.IsAttached)
             {
-                Console.WriteLine("Press any key to continue...");
+                Console.Error.WriteLine("Press any key to continue...");
                 Console.ReadKey(true);
             }
             return errors.Count();
