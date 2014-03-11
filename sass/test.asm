@@ -1,1 +1,1 @@
-﻿ld a, ixl
+﻿	.exec sass.exe

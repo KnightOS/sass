@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
+using System.Diagnostics;
 
 namespace sass
 {
@@ -713,6 +714,24 @@ namespace sass
                                                                                           RootLineNumber)));
                         }
                         return listing;
+                    case "exec":
+                        if (parameters.Length == 0)
+                        {
+                            listing.Error = AssemblyError.InvalidDirective;
+                            return listing;
+                        }
+                        else
+                        {
+                            var process = new ProcessStartInfo(parameters[0], string.Join(" ", parameters.Skip(1).ToArray()));
+                            process.UseShellExecute = false;
+                            process.RedirectStandardOutput = true;
+                            var p = Process.Start(process);
+                            var output = p.StandardOutput.ReadToEnd().Trim('\n', '\r', ' ');
+                            p.WaitForExit();
+                            listing.Output = Settings.Encoding.GetBytes(output);
+                            PC += (uint)listing.Output.Length;
+                            return listing;
+                        }
                     case "define":
                         if (parameters.Length == 1)
                         {
