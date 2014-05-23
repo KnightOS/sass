@@ -883,35 +883,75 @@ namespace sass
                         listing.Output = Settings.Encoding.GetBytes(parameter.Unescape());
                         return listing;
                     case "asciiz":
-                        if (parameters.Length == 0)
-                        {
-                            listing.Error = AssemblyError.InvalidDirective;
-                            return listing;
-                        }
-                        if (!(parameter.StartsWith("\"") && parameter.EndsWith("\"")))
-                        {
-                            listing.Error = AssemblyError.InvalidDirective;
-                            return listing;
-                        }
-                        parameter = parameter.Substring(1, parameter.Length - 2);
-                        listing.Output =
-                            Settings.Encoding.GetBytes(parameter.Unescape()).Concat(new byte[] { 0 }).ToArray();
-                        return listing;
+						if (passTwo)
+						{
+							var result = new List<byte>();
+							parameters = parameter.SafeSplit(',');
+							foreach (var p in parameters)
+							{
+								if (p.Trim().StartsWith("\"") && p.Trim().EndsWith("\""))
+									result.AddRange(Settings.Encoding.GetBytes(p.Trim().Substring(1, p.Length - 2).Unescape()));
+								else
+									listing.Error = AssemblyError.InvalidDirective;
+							}
+							listing.Output = new byte[result.Count + 1];
+							Array.Copy(result.ToArray(), listing.Output, result.Count);
+							listing.Output[listing.Output.Length - 1] = 0;
+							return listing;
+						}
+						else
+						{
+							parameters = parameter.SafeSplit(',');
+							int length = 0;
+							foreach (var p in parameters)
+							{
+								if (p.StartsWith("\"") && p.EndsWith("\""))
+									length += p.Substring(1, p.Length - 2).Unescape().Length;
+								else
+									listing.Error = AssemblyError.InvalidDirective;
+							}
+							length++;
+							listing.Output = new byte[length];
+							listing.PostponeEvalulation = true;
+							PC += (uint)listing.Output.Length;
+							return listing;
+						}
+						break;
                     case "asciip":
-                        if (parameters.Length == 0)
-                        {
-                            listing.Error = AssemblyError.InvalidDirective;
-                            return listing;
-                        }
-                        if (!(parameter.StartsWith("\"") && parameter.EndsWith("\"")))
-                        {
-                            listing.Error = AssemblyError.InvalidDirective;
-                            return listing;
-                        }
-                        parameter = parameter.Substring(1, parameter.Length - 2);
-                        listing.Output = Settings.Encoding.GetBytes(parameter.Unescape());
-                        listing.Output = new byte[] { (byte)parameter.Length }.Concat(listing.Output).ToArray();
-                        return listing;
+						if (passTwo)
+						{
+							var result = new List<byte>();
+							parameters = parameter.SafeSplit(',');
+							foreach (var p in parameters)
+							{
+								if (p.Trim().StartsWith("\"") && p.Trim().EndsWith("\""))
+									result.AddRange(Settings.Encoding.GetBytes(p.Trim().Substring(1, p.Length - 2).Unescape()));
+								else
+									listing.Error = AssemblyError.InvalidDirective;
+							}
+							listing.Output = new byte[result.Count + 1];
+							listing.Output[0] = (byte)result.Count;
+							Array.Copy(result.ToArray(), 0, listing.Output, 1, result.Count);
+							return listing;
+						}
+						else
+						{
+							parameters = parameter.SafeSplit(',');
+							int length = 0;
+							foreach (var p in parameters)
+							{
+								if (p.StartsWith("\"") && p.EndsWith("\""))
+									length += p.Substring(1, p.Length - 2).Unescape().Length;
+								else
+									listing.Error = AssemblyError.InvalidDirective;
+							}
+							length++;
+							listing.Output = new byte[length];
+							listing.PostponeEvalulation = true;
+							PC += (uint)listing.Output.Length;
+							return listing;
+						}
+						break;
                     case "nolist":
                         Listing = false;
                         return listing;
