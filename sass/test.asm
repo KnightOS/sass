@@ -1,1 +1,1 @@
-﻿	.exec sass.exe
+﻿	.asciiz "test"
