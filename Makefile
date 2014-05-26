@@ -2,6 +2,7 @@
 
 XBUILD:=xbuild
 DESTDIR:=/usr
+PREFIX:=/usr
 
 all: sass/bin/Debug/sass.exe
 
@@ -16,7 +17,7 @@ install:
 	mkdir -p $(DESTDIR)/bin/
 	mkdir -p $(DESTDIR)/mono/
 	install -c -m 775 sass/bin/Debug/sass.exe $(DESTDIR)/mono/sass.exe
-	echo -ne "#!/bin/sh\nmono $(DESTDIR)/mono/sass.exe \$$*" > $(DESTDIR)/bin/sass
+	echo -ne "#!/bin/sh\nmono $(PREFIX)/mono/sass.exe \$$*" > $(DESTDIR)/bin/sass
 	chmod +x $(DESTDIR)/bin/sass
 
 uninstall:
