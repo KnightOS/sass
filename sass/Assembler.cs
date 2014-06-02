@@ -555,7 +555,7 @@ namespace sass
                                 {
                                     if (p.Trim().StartsWith("\"") && p.Trim().EndsWith("\""))
                                         result.AddRange(
-                                            Settings.Encoding.GetBytes(p.Trim().Substring(1, p.Length - 2).Unescape()));
+											Settings.Encoding.GetBytes(p.Trim().Substring(1, p.Trim().Length - 2).Unescape()));
                                     else
                                     {
                                         try
