@@ -1,4 +1,1 @@
-﻿
-	jr test
-.fill 200
-test:
+﻿	ld hl, 0xFFFF

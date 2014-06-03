@@ -436,7 +436,7 @@ namespace sass
                     {
                         try
                         {
-                            bool truncated;
+							bool truncated;
                             if (value.Value.RelativeToPC)
 							{
 								var exp = ExpressionEngine.Evaluate(value.Value.Value, entry.Address, entry.RootLineNumber);
@@ -504,10 +504,13 @@ namespace sass
 			if (signed)
 			{
 				long _value = (long)value;
-				truncated = 1 << (bits - 1) < Math.Abs(_value);
+				truncated = 1 << (bits - 1) < Math.Abs (_value);
 			}
 			else
-				truncated = (value & truncationMask) != value;
+			{
+				long _value = (long)value;
+				truncated = 1 << bits < (Math.Abs(_value) + 1);
+			}
             // Convert to little endian
             if (result.Length % 8 != 0)
                 return result;
