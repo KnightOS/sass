@@ -188,7 +188,7 @@ namespace sass
                 Console.Error.WriteLine("Press any key to continue...");
                 Console.ReadKey(true);
             }
-            return errors.Count();
+			return errors.Count(e => e.Error != AssemblyError.None);
         }
 
         private static void WriteSymbols(string path, Assembler assembler)

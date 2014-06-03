@@ -502,8 +502,12 @@ namespace sass
             }
 			truncationMask >>= 1;
 			if (signed)
-				truncationMask >>= 1;
-			truncated = (value & truncationMask) != value;
+			{
+				long _value = (long)value;
+				truncated = 1 << (bits - 1) < Math.Abs(_value);
+			}
+			else
+				truncated = (value & truncationMask) != value;
             // Convert to little endian
             if (result.Length % 8 != 0)
                 return result;
