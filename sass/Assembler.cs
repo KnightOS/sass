@@ -438,10 +438,12 @@ namespace sass
                         {
                             bool truncated;
                             if (value.Value.RelativeToPC)
+							{
+								var exp = ExpressionEngine.Evaluate(value.Value.Value, entry.Address, entry.RootLineNumber);
                                 instruction = instruction.Replace("^" + value.Key, ConvertToBinary(
-                                    (ExpressionEngine.Evaluate(value.Value.Value, entry.Address, entry.RootLineNumber) - entry.Instruction.Length)
-                                        - entry.Address,
-                                    value.Value.Bits, out truncated));
+									(exp - entry.Instruction.Length) - entry.Address,
+									value.Value.Bits, true, out truncated));
+							}
                             else if (value.Value.RstOnly)
                             {
                                 truncated = false;
@@ -451,13 +453,13 @@ namespace sass
                                 else
                                 {
                                     instruction = instruction.Replace("&" + value.Key,
-                                        ConvertToBinary((ulong)rst >> 3, 3, out truncated));
+										ConvertToBinary((ulong)rst >> 3, 3, false, out truncated));
                                 }
                             }
                             else
                                 instruction = instruction.Replace("%" + value.Key, ConvertToBinary(
                                     ExpressionEngine.Evaluate(value.Value.Value, entry.Address, entry.RootLineNumber),
-                                    value.Value.Bits, out truncated));
+									value.Value.Bits, false, out truncated));
                             if (truncated)
                                 entry.Warning = AssemblyWarning.ValueTruncated;
                         }
@@ -483,7 +485,7 @@ namespace sass
             return output;
         }
 
-        private static string ConvertToBinary(ulong value, int bits, out bool truncated) // Little endian octets
+		private static string ConvertToBinary(ulong value, int bits, bool signed, out bool truncated) // Little endian octets
         {
             ulong mask = 1;
             string result = "";
@@ -498,7 +500,10 @@ namespace sass
                     result = "0" + result;
                 mask <<= 1;
             }
-            truncated = (long)value > (long)truncationMask;
+			truncationMask >>= 1;
+			if (signed)
+				truncationMask >>= 1;
+			truncated = (value & truncationMask) != value;
             // Convert to little endian
             if (result.Length % 8 != 0)
                 return result;

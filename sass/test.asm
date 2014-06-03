@@ -1,3 +1,3 @@
-﻿    .db     "Patrick D ",0
-    .dw     25000
-    
+﻿	jr test
+.fill 128
+test:
