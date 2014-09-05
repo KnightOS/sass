@@ -461,7 +461,7 @@ namespace sass
                                     ExpressionEngine.Evaluate(value.Value.Value, entry.Address, entry.RootLineNumber),
 									value.Value.Bits, false, out truncated));
                             if (truncated)
-                                entry.Warning = AssemblyWarning.ValueTruncated;
+                                entry.Error = AssemblyError.ValueTruncated;
                         }
                         catch (KeyNotFoundException)
                         {

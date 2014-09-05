@@ -7,7 +7,6 @@ namespace sass
 {
     public enum AssemblyWarning
     {
-        None = 0,
-        ValueTruncated = 1
+        None = 0
     }
 }
