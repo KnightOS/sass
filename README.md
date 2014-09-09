@@ -95,7 +95,7 @@ Boolean operators will assemble to "1" if true, or "0" if false.
 
 ### Relative Addressing
 
-You may use relative labels, spasm-style, to simplify your code. You may define any number of labels called "_"
+You may use relative labels, spasm-style, to simplify your code. You may define any number of labels called `_`
 and refer to them with `[-+]*_` to refer to the nearest ones. Add `+` to get the next label, and the next, and so
 on, and `-` to refer to previous relative labels.
 
