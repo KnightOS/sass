@@ -1,6 +1,10 @@
 # Makefile just to make life easier for those installing sass on unixes
 
+ifeq ($(OS),Windows_NT)
+XBUILD:=msbuild.exe
+else
 XBUILD:=xbuild
+endif
 DESTDIR:=/usr
 PREFIX:=/usr
 
@@ -11,7 +15,7 @@ clean:
 	rm -r sass/obj/
 
 sass/bin/Debug/sass.exe: sass/*.cs
-	xbuild
+	$(XBUILD)
 
 install:
 	mkdir -p $(DESTDIR)/bin/
