@@ -2,8 +2,10 @@
 
 ifeq ($(OS),Windows_NT)
 XBUILD:=msbuild.exe
+SASSPREFIX=
 else
 XBUILD:=xbuild
+SASSPREFIX=mono
 endif
 DESTDIR:=/usr
 PREFIX:=/usr
@@ -21,7 +23,7 @@ install:
 	mkdir -p $(DESTDIR)/bin/
 	mkdir -p $(DESTDIR)/mono/
 	install -c -m 775 sass/bin/Debug/sass.exe $(DESTDIR)/mono/sass.exe
-	echo -ne "#!/bin/sh\nmono $(PREFIX)/mono/sass.exe \$$*" > $(DESTDIR)/bin/sass
+	echo -ne "#!/bin/sh\n$(SASSPREFIX) $(PREFIX)/mono/sass.exe \$$*" > $(DESTDIR)/bin/sass
 	chmod +x $(DESTDIR)/bin/sass
 
 uninstall:
