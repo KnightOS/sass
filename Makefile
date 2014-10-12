@@ -4,8 +4,13 @@ ifeq ($(OS),Windows_NT)
 XBUILD:=msbuild.exe
 SASSPREFIX=
 else
+ifeq ($(OSTYPE),cygwin)
+XBUILD:=msbuild.exe
+SASSPREFIX=
+else
 XBUILD:=xbuild
 SASSPREFIX=mono
+endif
 endif
 DESTDIR:=/usr
 PREFIX:=/usr
