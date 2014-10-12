@@ -1,4 +1,4 @@
-﻿.org 0
+.org 0
     nop
     nop
     ld bc, windowTitle - helloString - 1

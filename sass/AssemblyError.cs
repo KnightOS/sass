@@ -15,6 +15,7 @@ namespace sass
         DuplicateName = 5,
         InvalidExpression = 6,
         UnknownSymbol = 7,
-        UncoupledStatement = 8
+        UncoupledStatement = 8,
+        ValueTruncated = 9
     }
 }
