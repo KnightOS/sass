@@ -22,7 +22,7 @@ clean:
 	rm -r sass/obj/
 
 sass/bin/Debug/sass.exe: sass/*.cs
-	$(XBUILD)
+	$(XBUILD) /p:Platform="Any CPU"
 
 install:
 	mkdir -p $(DESTDIR)/bin/
