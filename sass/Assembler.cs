@@ -9,6 +9,8 @@ namespace sass
 {
     public class Assembler
     {
+        public static bool AllowExec = true;
+
         public InstructionSet InstructionSet { get; set; }
         public ExpressionEngine ExpressionEngine { get; set; }
         public AssemblyOutput Output { get; set; }
@@ -727,7 +729,7 @@ namespace sass
                         }
                         return listing;
                     case "exec":
-                        if (parameters.Length == 0)
+                        if (parameters.Length == 0 || !AllowExec)
                         {
                             listing.Error = AssemblyError.InvalidDirective;
                             return listing;

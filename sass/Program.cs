@@ -256,7 +256,7 @@ namespace sass
             return Assembly.GetExecutingAssembly().GetManifestResourceStream(name);
         }
 
-        private static InstructionSet LoadInternalSet(string name)
+        public static InstructionSet LoadInternalSet(string name)
         {
             InstructionSet set;
             using (var stream = new StreamReader(LoadResource(name)))
