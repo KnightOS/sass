@@ -28,7 +28,7 @@ install:
 	mkdir -p $(DESTDIR)/bin/
 	mkdir -p $(DESTDIR)/mono/
 	install -c -m 775 sass/bin/Debug/sass.exe $(DESTDIR)/mono/sass.exe
-	echo -ne "#!/bin/sh\n$(SASSPREFIX) $(PREFIX)/mono/sass.exe \$$*" > $(DESTDIR)/bin/sass
+	printf "#!/bin/sh\n$(SASSPREFIX) $(PREFIX)/mono/sass.exe \$$*" > $(DESTDIR)/bin/sass
 	chmod +x $(DESTDIR)/bin/sass
 
 uninstall:
